@@ -29,7 +29,7 @@ func TestNewTimescaleDBPayload(t *testing.T) {
 		"template_field_1": "falcosidekick",
 	}
 
-	var f types.KubearmorPayload
+	var f types.Payload
 	require.Nil(t, json.Unmarshal([]byte(falcoTestInput), &f))
 	f.OutputFields["custom_field_1"] = "test-custom-value-1"
 	f.OutputFields["template_field_1"] = "falcosidekick"

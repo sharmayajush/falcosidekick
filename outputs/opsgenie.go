@@ -18,9 +18,9 @@ type opsgeniePayload struct {
 	Priority    string            `json:"priority,omitempty"`
 }
 
-func newOpsgeniePayload(kubearmorpayload types.KubearmorPayload, config *types.Configuration) opsgeniePayload {
-	details := make(map[string]string, len(kubearmorpayload.OutputFields))
-	for i, j := range kubearmorpayload.OutputFields {
+func newOpsgeniePayload(payload types.Payload, config *types.Configuration) opsgeniePayload {
+	details := make(map[string]string, len(payload.OutputFields))
+	for i, j := range payload.OutputFields {
 		switch v := j.(type) {
 		case string:
 			details[strings.ReplaceAll(i, ".", "_")] = v
@@ -30,14 +30,14 @@ func newOpsgeniePayload(kubearmorpayload types.KubearmorPayload, config *types.C
 		}
 	}
 
-	details["source"] = "kubearmor"
-	details["priority"] = kubearmorpayload.EventType
-	if kubearmorpayload.Hostname != "" {
-		details[Hostname] = kubearmorpayload.Hostname
+	details["source"] = payload.ComponentName
+	details["priority"] = payload.Priority
+	if payload.Hostname != "" {
+		details[Hostname] = payload.Hostname
 	}
 
 	var prio string
-	switch kubearmorpayload.EventType {
+	switch payload.Priority {
 	case "Alert":
 		prio = "P1"
 	default:
@@ -45,22 +45,22 @@ func newOpsgeniePayload(kubearmorpayload types.KubearmorPayload, config *types.C
 	}
 
 	return opsgeniePayload{
-		Message:     kubearmorpayload.EventType + " for " + kubearmorpayload.OutputFields["PodName"].(string),
+		Message:     payload.TriggerName + " for " + payload.OutputFields["PodName"].(string),
 		Entity:      "Kubearmor",
-		Description: kubearmorpayload.EventType,
+		Description: payload.FilterQuery,
 		Details:     details,
 		Priority:    prio,
 	}
 }
 
 // OpsgeniePost posts event to OpsGenie
-func (c *Client) OpsgeniePost(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) OpsgeniePost(payload types.Payload) {
 	c.Stats.Opsgenie.Add(Total, 1)
 	c.httpClientLock.Lock()
 	defer c.httpClientLock.Unlock()
 	c.AddHeader(AuthorizationHeaderKey, "GenieKey "+c.Config.Opsgenie.APIKey)
 
-	err := c.Post(newOpsgeniePayload(kubearmorpayload, c.Config))
+	err := c.Post(newOpsgeniePayload(payload, c.Config))
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:opsgenie", "status:error"})
 		c.Stats.Opsgenie.Add(Error, 1)

@@ -45,12 +45,12 @@ func getCEFSeverity(priority string) string {
 	}
 }
 
-func (c *Client) SyslogPost(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) SyslogPost(payload types.Payload) {
 	//c.Stats.Syslog.Add(Total, 1)
 	endpoint := fmt.Sprintf("%s:%s", c.Config.Syslog.Host, c.Config.Syslog.Port)
 	fmt.Println("endpoint ", endpoint)
 	var priority syslog.Priority
-	switch kubearmorpayload.EventType {
+	switch payload.TriggerName {
 	case "Alert":
 		priority = syslog.LOG_ALERT
 	case "Log":
@@ -67,18 +67,18 @@ func (c *Client) SyslogPost(kubearmorpayload types.KubearmorPayload) {
 	}
 	fmt.Println("syslog - ", sysLog)
 
-	var payload []byte
-	timestamp := time.Unix(kubearmorpayload.Timestamp, 0)
+	var sysPayload []byte
+	timestamp := time.Unix(payload.Timestamp, 0)
 
 	if c.Config.Syslog.Format == "cef" {
 		s := fmt.Sprintf(
 			"CEF:0|Accuknox|Kubearmor|1.0|Kubearmor Event|%v|uid=%v start=%v",
-			kubearmorpayload.EventType,
-			fmt.Sprint(kubearmorpayload.OutputFields["UID"]),
+			payload.TriggerName,
+			fmt.Sprint(payload.OutputFields["UID"]),
 			timestamp.Format(time.RFC3339),
 		)
-		s += " " + kubearmorpayload.EventType + "="
-		for i, j := range kubearmorpayload.OutputFields {
+		s += " " + payload.TriggerName + "="
+		for i, j := range payload.OutputFields {
 			switch v := j.(type) {
 			case string:
 				if v == "" {
@@ -91,12 +91,12 @@ func (c *Client) SyslogPost(kubearmorpayload types.KubearmorPayload) {
 			}
 		}
 		fmt.Println("payload ", s)
-		payload = []byte(strings.TrimSuffix(s, " "))
+		sysPayload = []byte(strings.TrimSuffix(s, " "))
 	} else {
-		payload, _ = json.Marshal(kubearmorpayload)
+		sysPayload, _ = json.Marshal(payload)
 	}
 
-	_, err = sysLog.Write(payload)
+	_, err = sysLog.Write(sysPayload)
 	if err != nil {
 		// go c.CountMetric(Outputs, 1, []string{"output:syslog", "status:error"})
 		// c.Stats.Syslog.Add(Error, 1)
@@ -113,7 +113,7 @@ func (c *Client) SyslogPost(kubearmorpayload types.KubearmorPayload) {
 func (c *Client) WatchSyslogsAlerts() error {
 	uid := "syslog"
 
-	conn := make(chan types.KubearmorPayload, 1000)
+	conn := make(chan types.Payload, 1000)
 	defer close(conn)
 	addAlertStruct(uid, conn)
 	defer removeAlertStruct(uid)

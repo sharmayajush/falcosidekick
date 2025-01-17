@@ -60,17 +60,17 @@ func NewWavefrontClient(config *types.Configuration, stats *types.Statistics, pr
 }
 
 // WavefrontPost sends metrics to WaveFront.
-func (c *Client) WavefrontPost(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) WavefrontPost(payload types.Payload) {
 
 	tags := make(map[string]string)
-	tags["severity"] = kubearmorpayload.EventType
-	tags["source"] = kubearmorpayload.OutputFields["PodName"].(string)
+	tags["severity"] = payload.Priority
+	tags["source"] = payload.OutputFields["PodName"].(string)
 
-	if kubearmorpayload.Hostname != "" {
-		tags[Hostname] = kubearmorpayload.Hostname
+	if payload.Hostname != "" {
+		tags[Hostname] = payload.Hostname
 	}
 
-	for tag, value := range kubearmorpayload.OutputFields {
+	for tag, value := range payload.OutputFields {
 		switch v := value.(type) {
 		case string:
 			tags[tag] = v
@@ -84,7 +84,7 @@ func (c *Client) WavefrontPost(kubearmorpayload types.KubearmorPayload) {
 	if c.WavefrontSender != nil {
 		sender := *c.WavefrontSender
 		// TODO: configurable metric name
-		if err := sender.SendMetric(c.Config.Wavefront.MetricName, 1, kubearmorpayload.Timestamp, "kubearmor", tags); err != nil {
+		if err := sender.SendMetric(c.Config.Wavefront.MetricName, 1, payload.Timestamp, "kubearmor", tags); err != nil {
 			c.Stats.Wavefront.Add(Error, 1)
 			c.PromStats.Outputs.With(map[string]string{"destination": "wavefront", "status": Error}).Inc()
 			return

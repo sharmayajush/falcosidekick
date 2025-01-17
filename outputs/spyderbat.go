@@ -134,14 +134,14 @@ type spyderbatPayload struct {
 	Container     string   `json:"container"`
 }
 
-func newSpyderbatPayload(kubearmorpayload types.KubearmorPayload) (spyderbatPayload, error) {
+func newSpyderbatPayload(payload types.Payload) (spyderbatPayload, error) {
 	nowTime := float64(time.Now().UnixNano()) / 1000000000
 
-	eventTime := float64(kubearmorpayload.Timestamp / 1000000000.0)
+	eventTime := float64(payload.Timestamp / 1000000000.0)
 
-	level := PriorityMap[kubearmorpayload.EventType]
-	arguments := kubearmorpayload.OutputFields["proc.cmdline"].(string)
-	container := kubearmorpayload.OutputFields["container.id"].(string)
+	level := PriorityMap[payload.Priority]
+	arguments := payload.OutputFields["proc.cmdline"].(string)
+	container := payload.OutputFields["container.id"].(string)
 
 	return spyderbatPayload{
 		Schema:        Schema,
@@ -149,7 +149,7 @@ func newSpyderbatPayload(kubearmorpayload types.KubearmorPayload) (spyderbatPayl
 		MonotonicTime: time.Now().Nanosecond(),
 		OrcTime:       nowTime,
 		Time:          eventTime,
-		PID:           int32(kubearmorpayload.OutputFields["PID"].(int32)),
+		PID:           int32(payload.OutputFields["PID"].(int32)),
 		Level:         level,
 		Arguments:     arguments,
 		Container:     container,
@@ -198,7 +198,7 @@ func NewSpyderbatClient(config *types.Configuration, stats *types.Statistics, pr
 	}, nil
 }
 
-func (c *Client) SpyderbatPost(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) SpyderbatPost(payload types.Payload) {
 	c.Stats.Spyderbat.Add(Total, 1)
 
 	c.httpClientLock.Lock()
@@ -206,9 +206,9 @@ func (c *Client) SpyderbatPost(kubearmorpayload types.KubearmorPayload) {
 	c.AddHeader("Authorization", "Bearer "+c.Config.Spyderbat.APIKey)
 	c.AddHeader("Content-Encoding", "gzip")
 
-	payload, err := newSpyderbatPayload(kubearmorpayload)
+	sbpayload, err := newSpyderbatPayload(payload)
 	if err == nil {
-		err = c.Post(payload)
+		err = c.Post(sbpayload)
 	}
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:spyderbat", "status:error"})

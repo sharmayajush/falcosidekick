@@ -9,7 +9,7 @@ import (
 )
 
 // OpenObservePost posts event to OpenObserve
-func (c *Client) OpenObservePost(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) OpenObservePost(payload types.Payload) {
 	c.Stats.OpenObserve.Add(Total, 1)
 
 	if c.Config.OpenObserve.Username != "" && c.Config.OpenObserve.Password != "" {
@@ -22,7 +22,7 @@ func (c *Client) OpenObservePost(kubearmorpayload types.KubearmorPayload) {
 		c.AddHeader(i, j)
 	}
 
-	if err := c.Post(kubearmorpayload); err != nil {
+	if err := c.Post(payload); err != nil {
 		c.setOpenObserveErrorMetrics()
 		log.Printf("[ERROR] : OpenObserve - %v\n", err)
 		return

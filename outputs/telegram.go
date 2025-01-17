@@ -24,18 +24,18 @@ func markdownV2EscapeText(text interface{}) string {
 	return replacer.Replace(fmt.Sprintf("%v", text))
 }
 
+// • *Tags*: {{ range .Tags }}{{markdownV2EscapeText . }} {{ end }}
+// **Output**: {{markdownV2EscapeText .Output }}
 var (
-	telegramMarkdownV2Tmpl = `*\[Kubearmor\] \[{{markdownV2EscapeText .Priority }}\] {{markdownV2EscapeText .Rule }}*
+	telegramMarkdownV2Tmpl = `*\[{{markdownV2EscapeText .Hostname }}\] \[{{markdownV2EscapeText .ComponentName }}\] {{markdownV2EscapeText .Priority }}*
 
-• *Time*: {{markdownV2EscapeText .Time }}
-• *Source*: {{markdownV2EscapeText .Source }}
-• *Hostname*: {{markdownV2EscapeText .Hostname }}
-• *Tags*: {{ range .Tags }}{{markdownV2EscapeText . }} {{ end }}
+• *Trigger Name*: {{markdownV2EscapeText .TriggerName }}
+• *Cluster Name*: {{markdownV2EscapeText .ClusterName }}
+• *Filter Query*: {{markdownV2EscapeText .FilterQuery }}
 • *Fields*:
 {{ range $key, $value := .OutputFields }}	  • *{{markdownV2EscapeText $key }}*: {{markdownV2EscapeText $value }}
 {{ end }}
 
-**Output**: {{markdownV2EscapeText .Output }}
 `
 )
 
@@ -47,8 +47,8 @@ type telegramPayload struct {
 	ChatID                string `json:"chat_id,omitempty"`
 }
 
-func newTelegramPayload(kubearmorpayload types.KubearmorPayload, config *types.Configuration) telegramPayload {
-	payload := telegramPayload{
+func newTelegramPayload(payload types.Payload, config *types.Configuration) telegramPayload {
+	telegramPayload := telegramPayload{
 
 		ParseMode:             "MarkdownV2",
 		DisableWebPagePreview: true,
@@ -61,31 +61,31 @@ func newTelegramPayload(kubearmorpayload types.KubearmorPayload, config *types.C
 		"markdownV2EscapeText": markdownV2EscapeText,
 	}
 	ttmpl, _ := textTemplate.New("telegram").Funcs(funcs).Parse(telegramMarkdownV2Tmpl)
-	err := ttmpl.Execute(&textBuffer, kubearmorpayload)
+	err := ttmpl.Execute(&textBuffer, payload)
 	if err != nil {
 		log.Printf("[ERROR] : Telegram - %v\n", err)
-		return payload
+		return telegramPayload
 	}
-	payload.Text = textBuffer.String()
+	telegramPayload.Text = textBuffer.String()
 
-	return payload
+	return telegramPayload
 }
 
 // TelegramPost posts event to Telegram
-func (c *Client) TelegramPost(kubearmorpayload types.KubearmorPayload) {
-	c.Stats.Telegram.Add(Total, 1)
+func (c *Client) TelegramPost(payload types.Payload) {
+	// c.Stats.Telegram.Add(Total, 1)
 
-	err := c.Post(newTelegramPayload(kubearmorpayload, c.Config))
+	err := c.Post(newTelegramPayload(payload, c.Config))
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:telegram", "status:error"})
-		c.Stats.Telegram.Add(Error, 1)
-		c.PromStats.Outputs.With(map[string]string{"destination": "telegram", "status": Error}).Inc()
+		// c.Stats.Telegram.Add(Error, 1)
+		// c.PromStats.Outputs.With(map[string]string{"destination": "telegram", "status": Error}).Inc()
 		log.Printf("[ERROR] : Telegram - %v\n", err)
 		return
 	}
 
 	// Setting the success status
 	go c.CountMetric(Outputs, 1, []string{"output:telegram", "status:ok"})
-	c.Stats.Telegram.Add(OK, 1)
-	c.PromStats.Outputs.With(map[string]string{"destination": "telegram", "status": OK}).Inc()
+	// c.Stats.Telegram.Add(OK, 1)
+	// c.PromStats.Outputs.With(map[string]string{"destination": "telegram", "status": OK}).Inc()
 }

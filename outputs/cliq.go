@@ -67,51 +67,51 @@ type cliqPayload struct {
 	Slides []cliqSlide `json:"slides,omitempty"`
 }
 
-func newCliqPayload(kubearmorpayload types.KubearmorPayload, config *types.Configuration) cliqPayload {
+func newCliqPayload(payload types.Payload, config *types.Configuration) cliqPayload {
 	var (
-		payload cliqPayload
-		field   cliqTableRow
-		table   cliqTableData
+		cpayload cliqPayload
+		field    cliqTableRow
+		table    cliqTableData
 	)
 
-	payload.Bot.Name = botName
+	cpayload.Bot.Name = botName
 
 	if config.Cliq.MessageFormatTemplate != nil {
 		buf := &bytes.Buffer{}
-		if err := config.Cliq.MessageFormatTemplate.Execute(buf, kubearmorpayload); err != nil {
+		if err := config.Cliq.MessageFormatTemplate.Execute(buf, payload); err != nil {
 			log.Printf("[ERROR] : Cliq - Error expanding Cliq message %v", err)
 		} else {
-			payload.Text = buf.String()
+			cpayload.Text = buf.String()
 
 			if config.Cliq.OutputFormat == All || config.Cliq.OutputFormat == Text || config.Cliq.OutputFormat == "" {
 				slide := cliqSlide{
 					Type: textSlideType,
-					Data: kubearmorpayload.EventType,
+					Data: payload.TriggerName,
 				}
-				payload.Slides = append(payload.Slides, slide)
+				cpayload.Slides = append(cpayload.Slides, slide)
 			}
 		}
 	} else {
-		payload.Text = kubearmorpayload.EventType
+		cpayload.Text = payload.TriggerName
 	}
 
 	if config.Cliq.OutputFormat == All || config.Cliq.OutputFormat == Fields || config.Cliq.OutputFormat == "" {
 		field.Field = "Event"
-		field.Value = kubearmorpayload.EventType
+		field.Value = payload.TriggerName
 		table.Rows = append(table.Rows, field)
 
-		if kubearmorpayload.Hostname != "" {
+		if payload.Hostname != "" {
 			field.Field = Hostname
-			field.Value = kubearmorpayload.Hostname
+			field.Value = payload.Hostname
 			table.Rows = append(table.Rows, field)
 		}
 
-		for _, i := range getSortedStringKeys(kubearmorpayload.OutputFields) {
-			j := kubearmorpayload.OutputFields[i]
+		for _, i := range getSortedStringKeys(payload.OutputFields) {
+			j := payload.OutputFields[i]
 			switch j.(type) {
 			case string:
 				field.Field = i
-				field.Value = kubearmorpayload.OutputFields[i].(string)
+				field.Value = payload.OutputFields[i].(string)
 				table.Rows = append(table.Rows, field)
 			default:
 				field.Field = i
@@ -121,7 +121,7 @@ func newCliqPayload(kubearmorpayload types.KubearmorPayload, config *types.Confi
 		}
 
 		field.Field = Time
-		field.Value = fmt.Sprint(kubearmorpayload.Timestamp)
+		field.Value = fmt.Sprint(payload.Timestamp)
 		table.Rows = append(table.Rows, field)
 
 		table.Headers = tableSlideHeaders
@@ -129,12 +129,12 @@ func newCliqPayload(kubearmorpayload types.KubearmorPayload, config *types.Confi
 			Type: tableSlideType,
 			Data: &table,
 		}
-		payload.Slides = append(payload.Slides, slide)
+		cpayload.Slides = append(cpayload.Slides, slide)
 	}
 
 	if config.Cliq.UseEmoji {
 		var emoji rune
-		switch kubearmorpayload.EventType {
+		switch payload.Priority {
 		case "Alert":
 			emoji = errorEmoji
 		case "Log":
@@ -142,26 +142,26 @@ func newCliqPayload(kubearmorpayload types.KubearmorPayload, config *types.Confi
 		default:
 			emoji = '?'
 		}
-		payload.Text = fmt.Sprintf("%c %s", emoji, payload.Text)
+		cpayload.Text = fmt.Sprintf("%c %s", emoji, cpayload.Text)
 	}
 
 	if config.Cliq.Icon != "" {
-		payload.Bot.Image = config.Cliq.Icon
+		cpayload.Bot.Image = config.Cliq.Icon
 	} else {
-		payload.Bot.Image = DefaultIconURL
+		cpayload.Bot.Image = DefaultIconURL
 	}
 
-	return payload
+	return cpayload
 }
 
 // CliqPost posts event to cliq
-func (c *Client) CliqPost(KubearmorPayload types.KubearmorPayload) {
+func (c *Client) CliqPost(Payload types.Payload) {
 	c.Stats.Cliq.Add(Total, 1)
 
 	c.httpClientLock.Lock()
 	defer c.httpClientLock.Unlock()
 	c.AddHeader(ContentTypeHeaderKey, "application/json")
-	err := c.Post(newCliqPayload(KubearmorPayload, c.Config))
+	err := c.Post(newCliqPayload(Payload, c.Config))
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:cliq", "status:error"})
 		c.Stats.Cliq.Add(Error, 1)
@@ -179,7 +179,7 @@ func (c *Client) CliqPost(KubearmorPayload types.KubearmorPayload) {
 func (c *Client) WatchCliqPostAlerts() error {
 	uid := uuid.Must(uuid.NewRandom()).String()
 
-	conn := make(chan types.KubearmorPayload, 1000)
+	conn := make(chan types.Payload, 1000)
 	defer close(conn)
 	addAlertStruct(uid, conn)
 	defer removeAlertStruct(uid)

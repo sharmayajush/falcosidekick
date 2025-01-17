@@ -9,22 +9,22 @@ import (
 )
 
 type WebUIPayload struct {
-	Event   types.KubearmorPayload `json:"event"`
-	Outputs []string               `json:"outputs"`
+	Event   types.Payload `json:"event"`
+	Outputs []string      `json:"outputs"`
 }
 
-func newWebUIPayload(kubearmorpayload types.KubearmorPayload, config *types.Configuration) WebUIPayload {
+func newWebUIPayload(payload types.Payload, config *types.Configuration) WebUIPayload {
 	return WebUIPayload{
-		Event:   kubearmorpayload,
+		Event:   payload,
 		Outputs: EnabledOutputs,
 	}
 }
 
 // WebUIPost posts event to Slack
-func (c *Client) WebUIPost(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) WebUIPost(payload types.Payload) {
 	c.Stats.WebUI.Add(Total, 1)
 
-	err := c.Post(newWebUIPayload(kubearmorpayload, c.Config))
+	err := c.Post(newWebUIPayload(payload, c.Config))
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:webui", "status:error"})
 		c.Stats.WebUI.Add(Error, 1)

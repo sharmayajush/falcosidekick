@@ -234,7 +234,7 @@ func init() {
 		} else {
 			if config.Elasticsearch.CreateIndexTemplate {
 				elasticsearchClient.EndpointURL, _ = url.Parse(fmt.Sprintf("%s/_index_template/falco", config.Elasticsearch.HostPort))
-				err = elasticsearchClient.ElasticsearchCreateIndexTemplate(config.Elasticsearch)
+				// err = elasticsearchClient.ElasticsearchCreateIndexTemplate(config.Elasticsearch)
 			}
 		}
 		if err != nil {
@@ -531,7 +531,7 @@ func init() {
 
 	if config.Kubeless.Namespace != "" && config.Kubeless.Function != "" {
 		var err error
-		kubelessClient, err = outputs.NewKubelessClient(config, stats, promStats, statsdClient, dogstatsdClient)
+		// kubelessClient, err = outputs.NewKubelessClient(config, stats, promStats, statsdClient, dogstatsdClient)
 		if err != nil {
 			log.Printf("[ERROR] : Kubeless - %v\n", err)
 			config.Kubeless.Namespace = ""

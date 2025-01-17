@@ -49,11 +49,11 @@ func NewRedisClient(config *types.Configuration, stats *types.Statistics, promSt
 	}, nil
 }
 
-func (c *Client) RedisPost(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) RedisPost(payload types.Payload) {
 	c.Stats.Redis.Add(Total, 1)
-	redisPayload, _ := json.Marshal(kubearmorpayload)
+	redisPayload, _ := json.Marshal(payload)
 	if strings.ToLower(c.Config.Redis.StorageType) == "hashmap" {
-		_, err := c.RedisClient.HSet(context.Background(), c.Config.Redis.Key, kubearmorpayload.OutputFields["UID"], redisPayload).Result()
+		_, err := c.RedisClient.HSet(context.Background(), c.Config.Redis.Key, payload.OutputFields["UID"], redisPayload).Result()
 		if err != nil {
 			c.ReportError(err)
 		}
@@ -73,7 +73,7 @@ func (c *Client) RedisPost(kubearmorpayload types.KubearmorPayload) {
 func (c *Client) WatchRedisPostAlerts() error {
 	uid := uuid.Must(uuid.NewRandom()).String()
 
-	conn := make(chan types.KubearmorPayload, 1000)
+	conn := make(chan types.Payload, 1000)
 	defer close(conn)
 	addAlertStruct(uid, conn)
 	defer removeAlertStruct(uid)

@@ -42,16 +42,16 @@ type gotifyPayload struct {
 	Extras   map[string]map[string]string `json:"extras"`
 }
 
-func newGotifyPayload(kubearmorpayload types.KubearmorPayload, config *types.Configuration) gotifyPayload {
+func newGotifyPayload(payload types.Payload, config *types.Configuration) gotifyPayload {
 	g := gotifyPayload{
-		Title:    "[Kubearmor] [" + kubearmorpayload.EventType + "] ",
-		Priority: int(types.Priority(kubearmorpayload.EventType)),
+		Title:    "[" + payload.ComponentName + "] [" + payload.TriggerName + "] ",
+		Priority: int(types.Priority(payload.Priority)),
 		Extras: map[string]map[string]string{
 			"client::display": {
 				"contentType": "text/markdown",
 			},
 		},
-		//Message: kubearmorpayload.Output,
+		//Message: payload.Output,
 	}
 
 	var ttmpl *textTemplate.Template
@@ -63,14 +63,14 @@ func newGotifyPayload(kubearmorpayload types.KubearmorPayload, config *types.Con
 	case Plaintext, Text:
 		format = "plaintext"
 		ttmpl, _ = textTemplate.New("gotify").Parse(gotifyTextTmpl)
-		err = ttmpl.Execute(&outtext, kubearmorpayload)
+		err = ttmpl.Execute(&outtext, payload)
 	case JSON:
 		format = "plaintext"
-		messageBytes, err = json.Marshal(kubearmorpayload)
+		messageBytes, err = json.Marshal(payload)
 	default:
 		format = "markdown"
 		ttmpl, _ = textTemplate.New("gotify").Parse(gotifyMarkdownTmpl)
-		err = ttmpl.Execute(&outtext, kubearmorpayload)
+		err = ttmpl.Execute(&outtext, payload)
 	}
 	if err != nil {
 		log.Printf("[ERROR] : Gotify - %v\n", err)
@@ -90,7 +90,7 @@ func newGotifyPayload(kubearmorpayload types.KubearmorPayload, config *types.Con
 }
 
 // GotifyPost posts event to Gotify
-func (c *Client) GotifyPost(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) GotifyPost(payload types.Payload) {
 	c.Stats.Gotify.Add(Total, 1)
 
 	if c.Config.Gotify.Token != "" {
@@ -99,7 +99,7 @@ func (c *Client) GotifyPost(kubearmorpayload types.KubearmorPayload) {
 		c.AddHeader("X-Gotify-Key", c.Config.Gotify.Token)
 	}
 
-	err := c.Post(newGotifyPayload(kubearmorpayload, c.Config))
+	err := c.Post(newGotifyPayload(payload, c.Config))
 	if err != nil {
 		c.setGotifyErrorMetrics()
 		log.Printf("[ERROR] : Gotify - %v\n", err)

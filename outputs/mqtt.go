@@ -49,7 +49,7 @@ func NewMQTTClient(config *types.Configuration, stats *types.Statistics, promSta
 }
 
 // MQTTPublish .
-func (c *Client) MQTTPublish(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) MQTTPublish(payload types.Payload) {
 	c.Stats.MQTT.Add(Total, 1)
 
 	t := c.MQTTClient.Connect()
@@ -62,7 +62,7 @@ func (c *Client) MQTTPublish(kubearmorpayload types.KubearmorPayload) {
 		return
 	}
 	defer c.MQTTClient.Disconnect(100)
-	if err := c.MQTTClient.Publish(c.Config.MQTT.Topic, byte(c.Config.MQTT.QOS), c.Config.MQTT.Retained, kubearmorpayload.String()).Error(); err != nil {
+	if err := c.MQTTClient.Publish(c.Config.MQTT.Topic, byte(c.Config.MQTT.QOS), c.Config.MQTT.Retained, payload.String()).Error(); err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:mqtt", "status:error"})
 		c.Stats.MQTT.Add(Error, 1)
 		c.PromStats.Outputs.With(map[string]string{"destination": "mqtt", "status": Error}).Inc()
@@ -79,7 +79,7 @@ func (c *Client) MQTTPublish(kubearmorpayload types.KubearmorPayload) {
 func (c *Client) WatchMQTTPublishAlerts() error {
 	uid := uuid.Must(uuid.NewRandom()).String()
 
-	conn := make(chan types.KubearmorPayload, 1000)
+	conn := make(chan types.Payload, 1000)
 	defer close(conn)
 	addAlertStruct(uid, conn)
 	defer removeAlertStruct(uid)

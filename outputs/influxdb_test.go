@@ -13,7 +13,7 @@ import (
 
 func TestNewInfluxdbPayload(t *testing.T) {
 	expectedOutput := `"events,rule=Test_rule,priority=Debug,source=syscalls,proc.name=falcosidekick,hostname=test-host,tags=test_example value=\"This is a test from falcosidekick\""`
-	var f types.KubearmorPayload
+	var f types.Payload
 	require.Nil(t, json.Unmarshal([]byte(falcoTestInput), &f))
 
 	influxdbPayload, err := json.Marshal(newInfluxdbPayload(f, &types.Configuration{}))

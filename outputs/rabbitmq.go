@@ -43,10 +43,10 @@ func NewRabbitmqClient(config *types.Configuration, stats *types.Statistics, pro
 }
 
 // Publish sends a message to a Rabbitmq
-func (c *Client) Publish(KubearmorPayload types.KubearmorPayload) {
+func (c *Client) Publish(Payload types.Payload) {
 	c.Stats.Rabbitmq.Add(Total, 1)
 
-	payload, _ := json.Marshal(KubearmorPayload)
+	payload, _ := json.Marshal(Payload)
 
 	err := c.RabbitmqClient.Publish("", c.Config.Rabbitmq.Queue, false, false, amqp.Publishing{
 		ContentType: "text/plain",
@@ -71,7 +71,7 @@ func (c *Client) Publish(KubearmorPayload types.KubearmorPayload) {
 func (c *Client) WatchRabbitmqPublishAlerts() error {
 	uid := "Rabbitmq"
 
-	conn := make(chan types.KubearmorPayload, 1000)
+	conn := make(chan types.Payload, 1000)
 	defer close(conn)
 	addAlertStruct(uid, conn)
 	defer removeAlertStruct(uid)

@@ -13,7 +13,7 @@ import (
 )
 
 // StanPublish publishes event to NATS Streaming
-func (c *Client) StanPublish(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) StanPublish(payload types.Payload) {
 	c.Stats.Stan.Add(Total, 1)
 
 	nc, err := stan.Connect(c.Config.Stan.ClusterID, c.Config.Stan.ClientID, stan.NatsURL(c.EndpointURL.String()))
@@ -24,14 +24,14 @@ func (c *Client) StanPublish(kubearmorpayload types.KubearmorPayload) {
 	}
 	defer nc.Close()
 
-	j, err := json.Marshal(kubearmorpayload)
+	j, err := json.Marshal(payload)
 	if err != nil {
 		c.setStanErrorMetrics()
 		log.Printf("[ERROR] : STAN - %v\n", err.Error())
 		return
 	}
 
-	err = nc.Publish("kubearmor."+strings.ToLower(kubearmorpayload.EventType)+".", j)
+	err = nc.Publish(strings.ToLower(payload.ComponentName)+"."+strings.ToLower(payload.TriggerName)+".", j)
 	if err != nil {
 		c.setStanErrorMetrics()
 		log.Printf("[ERROR] : STAN - %v\n", err)

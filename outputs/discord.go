@@ -30,7 +30,7 @@ type discordEmbedFieldPayload struct {
 	Inline bool   `json:"inline"`
 }
 
-func newDiscordPayload(kubearmorpayload types.KubearmorPayload, config *types.Configuration) discordPayload {
+func newDiscordPayload(payload types.Payload, config *types.Configuration) discordPayload {
 	var iconURL string
 	if config.Discord.Icon != "" {
 		iconURL = config.Discord.Icon
@@ -39,10 +39,10 @@ func newDiscordPayload(kubearmorpayload types.KubearmorPayload, config *types.Co
 	}
 
 	var color string
-	switch kubearmorpayload.EventType {
-	case "Alert":
+	switch payload.Priority {
+	case "Medium":
 		color = "11027200" // dark orange
-	case "Log":
+	case "Low":
 		color = "3447003" // blue
 	}
 
@@ -50,8 +50,12 @@ func newDiscordPayload(kubearmorpayload types.KubearmorPayload, config *types.Co
 
 	embedFields := make([]discordEmbedFieldPayload, 0)
 	var embedField discordEmbedFieldPayload
+	if payload.Hostname != "" {
+		embedFields = append(embedFields, discordEmbedFieldPayload{Hostname, payload.Hostname, true})
+	}
+	embedFields = append(embedFields, discordEmbedFieldPayload{"Trigger Name", payload.TriggerName, true})
 
-	for i, j := range kubearmorpayload.OutputFields {
+	for i, j := range payload.OutputFields {
 		switch v := j.(type) {
 		case string:
 			jj := j.(string)
@@ -66,49 +70,47 @@ func newDiscordPayload(kubearmorpayload types.KubearmorPayload, config *types.Co
 		embedFields = append(embedFields, embedField)
 	}
 
-	if kubearmorpayload.Hostname != "" {
-		embedFields = append(embedFields, discordEmbedFieldPayload{Hostname, kubearmorpayload.Hostname, true})
-	}
-	embedFields = append(embedFields, discordEmbedFieldPayload{Time, fmt.Sprint(kubearmorpayload.Timestamp), true})
+	embedFields = append(embedFields, discordEmbedFieldPayload{Time, fmt.Sprint(payload.Timestamp), true})
 
 	embed := discordEmbedPayload{
-		Title:       "",
-		Description: kubearmorpayload.EventType,
+		Title:       payload.ComponentName,
+		Description: payload.TriggerName,
 		Color:       color,
 		Fields:      embedFields,
 	}
 	embeds = append(embeds, embed)
+	fmt.Println("embeds: ", embeds)
 
 	return discordPayload{
-		Content:   "",
+		Content:   fmt.Sprintf("🚨 %s: %s", payload.Priority, payload.TriggerName),
 		AvatarURL: iconURL,
 		Embeds:    embeds,
 	}
 }
 
 // DiscordPost posts events to discord
-func (c *Client) DiscordPost(KubearmorPayload types.KubearmorPayload) {
-	c.Stats.Discord.Add(Total, 1)
+func (c *Client) DiscordPost(Payload types.Payload) {
+	// c.Stats.Discord.Add(Total, 1)
 
-	err := c.Post(newDiscordPayload(KubearmorPayload, c.Config))
+	err := c.Post(newDiscordPayload(Payload, c.Config))
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:discord", "status:error"})
-		c.Stats.Discord.Add(Error, 1)
-		c.PromStats.Outputs.With(map[string]string{"destination": "discord", "status": Error}).Inc()
+		// c.Stats.Discord.Add(Error, 1)
+		// c.PromStats.Outputs.With(map[string]string{"destination": "discord", "status": Error}).Inc()
 		log.Printf("[ERROR] : Discord - %v\n", err)
 		return
 	}
 
 	// Setting the success status
 	go c.CountMetric(Outputs, 1, []string{"output:discord", "status:ok"})
-	c.Stats.Discord.Add(OK, 1)
-	c.PromStats.Outputs.With(map[string]string{"destination": "discord", "status": OK}).Inc()
+	// c.Stats.Discord.Add(OK, 1)
+	// c.PromStats.Outputs.With(map[string]string{"destination": "discord", "status": OK}).Inc()
 }
 
 func (c *Client) WatchDiscordAlerts() error {
 	uid := "Discord"
 
-	conn := make(chan types.KubearmorPayload, 1000)
+	conn := make(chan types.Payload, 1000)
 	defer close(conn)
 	addAlertStruct(uid, conn)
 	defer removeAlertStruct(uid)

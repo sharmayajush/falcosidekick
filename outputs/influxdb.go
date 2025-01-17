@@ -13,10 +13,10 @@ import (
 
 type influxdbPayload string
 
-func newInfluxdbPayload(kubearmorpayload types.KubearmorPayload, config *types.Configuration) influxdbPayload {
-	s := "events,rule=" + strings.Replace(kubearmorpayload.EventType, " ", "_", -1) + ",priority=" + kubearmorpayload.EventType + ",source=" + kubearmorpayload.OutputFields["PodName"].(string)
+func newInfluxdbPayload(payload types.Payload, config *types.Configuration) influxdbPayload {
+	s := "events,rule=" + strings.Replace(payload.TriggerName, " ", "_", -1) + ",priority=" + payload.Priority + ",source=" + payload.OutputFields["PodName"].(string)
 
-	for i, j := range kubearmorpayload.OutputFields {
+	for i, j := range payload.OutputFields {
 		switch v := j.(type) {
 		case string:
 			s += "," + i + "=" + strings.Replace(v, " ", "_", -1)
@@ -27,15 +27,15 @@ func newInfluxdbPayload(kubearmorpayload types.KubearmorPayload, config *types.C
 		}
 	}
 
-	if kubearmorpayload.Hostname != "" {
-		s += "," + Hostname + "=" + kubearmorpayload.Hostname
+	if payload.Hostname != "" {
+		s += "," + Hostname + "=" + payload.Hostname
 	}
 
 	return influxdbPayload(s)
 }
 
 // InfluxdbPost posts event to InfluxDB
-func (c *Client) InfluxdbPost(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) InfluxdbPost(payload types.Payload) {
 	c.Stats.Influxdb.Add(Total, 1)
 
 	c.httpClientLock.Lock()
@@ -46,7 +46,7 @@ func (c *Client) InfluxdbPost(kubearmorpayload types.KubearmorPayload) {
 		c.AddHeader("Authorization", "Token "+c.Config.Influxdb.Token)
 	}
 
-	err := c.Post(newInfluxdbPayload(kubearmorpayload, c.Config))
+	err := c.Post(newInfluxdbPayload(payload, c.Config))
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:influxdb", "status:error"})
 		c.Stats.Influxdb.Add(Error, 1)
@@ -64,7 +64,7 @@ func (c *Client) InfluxdbPost(kubearmorpayload types.KubearmorPayload) {
 func (c *Client) WatchInfluxdbPostAlerts() error {
 	uid := uuid.Must(uuid.NewRandom()).String()
 
-	conn := make(chan types.KubearmorPayload, 1000)
+	conn := make(chan types.Payload, 1000)
 	defer close(conn)
 	addAlertStruct(uid, conn)
 	defer removeAlertStruct(uid)

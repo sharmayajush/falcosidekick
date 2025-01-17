@@ -29,7 +29,7 @@ func NewEventHubClient(config *types.Configuration, stats *types.Statistics, pro
 }
 
 // EventHubPost posts event to Azure Event Hub
-func (c *Client) EventHubPost(KubearmorPayload types.KubearmorPayload) {
+func (c *Client) EventHubPost(Payload types.Payload) {
 	c.Stats.AzureEventHub.Add(Total, 1)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
@@ -53,7 +53,7 @@ func (c *Client) EventHubPost(KubearmorPayload types.KubearmorPayload) {
 
 	log.Printf("[INFO]  : %v EventHub - Hub client created\n", c.OutputType)
 
-	data, err := json.Marshal(KubearmorPayload)
+	data, err := json.Marshal(Payload)
 	if err != nil {
 		c.setEventHubErrorMetrics()
 		log.Printf("[ERROR] : Cannot marshal payload: %v", err.Error())
@@ -98,7 +98,7 @@ func (c *Client) setEventHubErrorMetrics() {
 func (c *Client) WatchEventHubPostlerts() error {
 	uid := uuid.Must(uuid.NewRandom()).String()
 
-	conn := make(chan types.KubearmorPayload, 1000)
+	conn := make(chan types.Payload, 1000)
 	defer close(conn)
 	addAlertStruct(uid, conn)
 	defer removeAlertStruct(uid)

@@ -54,7 +54,7 @@ type Alerts struct {
 
 // AlertStruct Structure
 type AlertStruct struct {
-	Broadcast chan types.KubearmorPayload
+	Broadcast chan types.Payload
 }
 
 // AlertLock Lock
@@ -72,7 +72,7 @@ var AlertBufferChannel chan []byte
 // LogStruct Structure
 type LogStruct struct {
 	Filter    string
-	Broadcast chan types.KubearmorPayload
+	Broadcast chan types.Payload
 }
 
 var LogLock *sync.RWMutex
@@ -97,7 +97,7 @@ func InitSidekick() {
 
 }
 
-func addAlertStruct(uid string, conn chan types.KubearmorPayload) {
+func addAlertStruct(uid string, conn chan types.Payload) {
 	AlertLock.Lock()
 	defer AlertLock.Unlock()
 
@@ -122,13 +122,13 @@ func (c *Client) AddAlertFromBuffChan() {
 		select {
 		case res := <-AlertBufferChannel:
 
-			alert := types.KubearmorPayload{}
+			alert := types.Payload{}
 			// further updates needed
 			alert.Timestamp = time.Now().Unix()
 			alert.UpdatedTime = time.Now().String()
 			alert.ClusterName = "cluster_1"
 			alert.Hostname = "host"
-			alert.EventType = "Alert"
+			alert.ComponentName = "Alert"
 			alert.OutputFields = make(map[string]interface{})
 
 			json.Unmarshal(res, &alert.OutputFields)
@@ -152,57 +152,73 @@ func (c *Client) AddAlertFromBuffChan() {
 func (c *Client) SendAlerts() error {
 	defer c.WgServer.Done()
 
-	for {
-		var res Alerts
+	// for {
+	var res Alerts
 
-		res = Alerts{
-			Timestamp:     1622487600,
-			UpdatedTime:   "2024-07-25T14:20:00Z",
-			ClusterName:   "example-cluster",
-			HostName:      "example-host",
-			NamespaceName: "default",
-			Owner: &Podowner{
-				Ref:       "owner-ref-value",
-				Name:      "owner-name-value",
-				Namespace: "owner-namespace-value",
-			},
-			PodName:           "example-pod",
-			Labels:            "key=value",
-			ContainerID:       "container-id",
-			ContainerName:     "example-container",
-			ContainerImage:    "example-image",
-			HostPPID:          1,
-			HostPID:           2,
-			PPID:              3,
-			PID:               4,
-			UID:               1000,
-			ParentProcessName: "parent-process",
-			ProcessName:       "process",
-			PolicyName:        "example-policy",
-			Severity:          "high",
-			Tags:              "tag1,tag2",
-			ATags:             []string{"tag1", "tag2"},
-			Message:           "new message",
-			Type:              "alert-type",
-			Source:            "source",
-			Operation:         "operation",
-			Resource:          "resource",
-			Data:              "data",
-			Enforcer:          "enforcer",
-			Action:            "action",
-			Result:            "result",
-		}
-
-		jsonData, err := json.Marshal(res)
-		if err != nil {
-			log.Fatalf("Error marshaling to JSON: %v", err)
-		}
-
-		select {
-		case AlertBufferChannel <- jsonData:
-		default:
-		}
-		time.Sleep(10 * time.Second)
+	res = Alerts{
+		Timestamp:     1622487600,
+		UpdatedTime:   "2024-07-25T14:20:00Z",
+		ClusterName:   "example-cluster",
+		HostName:      "example-host",
+		NamespaceName: "default",
+		Owner: &Podowner{
+			Ref:       "owner-ref-value",
+			Name:      "owner-name-value",
+			Namespace: "owner-namespace-value",
+		},
+		PodName:           "example-pod",
+		Labels:            "key=value",
+		ContainerID:       "container-id",
+		ContainerName:     "example-container",
+		ContainerImage:    "example-image",
+		HostPPID:          1,
+		HostPID:           2,
+		PPID:              3,
+		PID:               4,
+		UID:               1000,
+		ParentProcessName: "parent-process",
+		ProcessName:       "process",
+		PolicyName:        "example-policy",
+		Severity:          "high",
+		Tags:              "tag1,tag2",
+		ATags:             []string{"tag1", "tag2"},
+		Message:           "new message",
+		Type:              "alert-type",
+		Source:            "source",
+		Operation:         "operation",
+		Resource:          "resource",
+		Data:              "data",
+		Enforcer:          "enforcer",
+		Action:            "action",
+		Result:            "result",
 	}
 
+	jsonData, err := json.Marshal(res)
+	if err != nil {
+		log.Fatalf("Error marshaling to JSON: %v", err)
+	}
+
+	alert := types.Payload{}
+	// further updates needed
+	alert.Timestamp = time.Now().Unix()
+	alert.TriggerName = "local_test_trigger"
+	alert.UpdatedTime = time.Now().String()
+	alert.ClusterName = "cluster_1"
+	alert.Hostname = "Accuknox"
+	alert.ComponentName = "KubeArmor"
+	alert.Priority = "Medium"
+	alert.TenantID = "11"
+	alert.FilterQuery = "abc:a"
+	alert.OutputFields = make(map[string]interface{})
+
+	json.Unmarshal(jsonData, &alert.OutputFields)
+
+	// select {
+	// case AlertBufferChannel <- jsonData:
+	// default:
+	// }
+	c.DiscordPost(alert)
+	time.Sleep(10 * time.Second)
+	// }
+	return nil
 }

@@ -38,13 +38,13 @@ type googlechatPayload struct {
 	Cards []card `json:"cards,omitempty"`
 }
 
-func newGooglechatPayload(kubearmorpayload types.KubearmorPayload, config *types.Configuration) googlechatPayload {
+func newGooglechatPayload(payload types.Payload, config *types.Configuration) googlechatPayload {
 	var messageText string
 	widgets := []widget{}
 
 	if config.Googlechat.MessageFormatTemplate != nil {
 		buf := &bytes.Buffer{}
-		if err := config.Googlechat.MessageFormatTemplate.Execute(buf, kubearmorpayload); err != nil {
+		if err := config.Googlechat.MessageFormatTemplate.Execute(buf, payload); err != nil {
 			log.Printf("[ERROR] : GoogleChat - Error expanding Google Chat message %v", err)
 		} else {
 			messageText = buf.String()
@@ -57,23 +57,23 @@ func newGooglechatPayload(kubearmorpayload types.KubearmorPayload, config *types
 		}
 	}
 
-	for _, i := range getSortedStringKeys(kubearmorpayload.OutputFields) {
+	for _, i := range getSortedStringKeys(payload.OutputFields) {
 		widgets = append(widgets, widget{
 			KeyValue: keyValue{
 				TopLabel: i,
-				Content:  fmt.Sprint(kubearmorpayload.OutputFields[i]),
+				Content:  fmt.Sprint(payload.OutputFields[i]),
 			},
 		})
 	}
 
-	widgets = append(widgets, widget{KeyValue: keyValue{"priority", kubearmorpayload.EventType}})
-	widgets = append(widgets, widget{KeyValue: keyValue{"source pod", kubearmorpayload.OutputFields["PodName"].(string)}})
+	widgets = append(widgets, widget{KeyValue: keyValue{"priority", payload.Priority}})
+	widgets = append(widgets, widget{KeyValue: keyValue{"source pod", payload.OutputFields["PodName"].(string)}})
 
-	if kubearmorpayload.Hostname != "" {
-		widgets = append(widgets, widget{KeyValue: keyValue{Hostname, kubearmorpayload.Hostname}})
+	if payload.Hostname != "" {
+		widgets = append(widgets, widget{KeyValue: keyValue{Hostname, payload.Hostname}})
 	}
 
-	widgets = append(widgets, widget{KeyValue: keyValue{"time", fmt.Sprint(kubearmorpayload.Timestamp)}})
+	widgets = append(widgets, widget{KeyValue: keyValue{"time", fmt.Sprint(payload.Timestamp)}})
 
 	return googlechatPayload{
 		Text: messageText,
@@ -88,10 +88,10 @@ func newGooglechatPayload(kubearmorpayload types.KubearmorPayload, config *types
 }
 
 // GooglechatPost posts event to Google Chat
-func (c *Client) GooglechatPost(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) GooglechatPost(payload types.Payload) {
 	c.Stats.GoogleChat.Add(Total, 1)
 
-	err := c.Post(newGooglechatPayload(kubearmorpayload, c.Config))
+	err := c.Post(newGooglechatPayload(payload, c.Config))
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:googlechat", "status:error"})
 		c.Stats.GoogleChat.Add(Error, 1)

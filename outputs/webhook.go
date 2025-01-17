@@ -12,7 +12,7 @@ import (
 )
 
 // WebhookPost posts event to an URL
-func (c *Client) WebhookPost(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) WebhookPost(payload types.Payload) {
 	c.Stats.Webhook.Add(Total, 1)
 
 	if len(c.Config.Webhook.CustomHeaders) != 0 {
@@ -24,9 +24,9 @@ func (c *Client) WebhookPost(kubearmorpayload types.KubearmorPayload) {
 	}
 	var err error
 	if strings.ToUpper(c.Config.Webhook.Method) == HttpPut {
-		err = c.Put(kubearmorpayload)
+		err = c.Put(payload)
 	} else {
-		err = c.Post(kubearmorpayload)
+		err = c.Post(payload)
 	}
 
 	if err != nil {
@@ -46,7 +46,7 @@ func (c *Client) WebhookPost(kubearmorpayload types.KubearmorPayload) {
 func (c *Client) WatchWebhookAlerts() error {
 	uid := uuid.Must(uuid.NewRandom()).String()
 
-	conn := make(chan types.KubearmorPayload, 1000)
+	conn := make(chan types.Payload, 1000)
 	defer close(conn)
 	addAlertStruct(uid, conn)
 	defer removeAlertStruct(uid)

@@ -27,17 +27,21 @@ type FalcoPayload struct {
 	Hostname     string                 `json:"hostname,omitempty"`
 }
 
-// Payload is a struct to map kubearmor event json
-type KubearmorPayload struct {
-	Timestamp    int64                  ` json:"Timestamp,omitempty"`
-	UpdatedTime  string                 ` json:"UpdatedTime,omitempty"`
-	ClusterName  string                 ` json:"ClusterName,omitempty"`
-	Hostname     string                 ` json:"HostName,omitempty"`
-	EventType    string                 ` json:"EventType,omitempty"`
-	OutputFields map[string]interface{} `json:"Detail"`
+// Payload is a struct to map event json
+type Payload struct {
+	Timestamp     int64                  ` json:"Timestamp,omitempty"`
+	TriggerName   string                 ` json:"TriggerName,omitempty"`
+	UpdatedTime   string                 ` json:"UpdatedTime,omitempty"`
+	ClusterName   string                 ` json:"ClusterName,omitempty"`
+	Hostname      string                 ` json:"HostName,omitempty"`
+	ComponentName string                 ` json:"ComponentName,omitempty"`
+	Priority      string                 ` json:"Priority,omitempty"`
+	TenantID      string                 ` json:"TenantID,omitempty"`
+	FilterQuery   string                 ` json:"FiterQuery,omitempty"`
+	OutputFields  map[string]interface{} `json:"Detail"`
 }
 
-func (f KubearmorPayload) String() string {
+func (f Payload) String() string {
 	j, _ := json.Marshal(f)
 	return string(j)
 }

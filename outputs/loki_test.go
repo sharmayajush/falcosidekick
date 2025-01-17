@@ -27,7 +27,7 @@ func TestNewLokiPayload(t *testing.T) {
 		},
 	}
 
-	var f types.KubearmorPayload
+	var f types.Payload
 	require.Nil(t, json.Unmarshal([]byte(falcoTestInput), &f))
 	output := newLokiPayload(f, &types.Configuration{})
 

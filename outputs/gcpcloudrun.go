@@ -9,7 +9,7 @@ import (
 )
 
 // CloudRunFunctionPost call Cloud Function
-func (c *Client) CloudRunFunctionPost(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) CloudRunFunctionPost(payload types.Payload) {
 	c.Stats.GCPCloudRun.Add(Total, 1)
 
 	if c.Config.GCP.CloudRun.JWT != "" {
@@ -18,7 +18,7 @@ func (c *Client) CloudRunFunctionPost(kubearmorpayload types.KubearmorPayload) {
 		c.AddHeader(AuthorizationHeaderKey, "Bearer "+c.Config.GCP.CloudRun.JWT)
 	}
 
-	err := c.Post(kubearmorpayload)
+	err := c.Post(payload)
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:gcpcloudrun", "status:error"})
 		c.Stats.GCPCloudRun.Add(Error, 1)

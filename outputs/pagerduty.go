@@ -19,10 +19,10 @@ const (
 )
 
 // PagerdutyPost posts alert event to Pagerduty
-func (c *Client) PagerdutyPost(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) PagerdutyPost(payload types.Payload) {
 	c.Stats.Pagerduty.Add(Total, 1)
 
-	event := createPagerdutyEvent(kubearmorpayload, c.Config.Pagerduty)
+	event := createPagerdutyEvent(payload, c.Config.Pagerduty)
 
 	if strings.ToLower(c.Config.Pagerduty.Region) == "eu" {
 		pagerduty.WithV2EventsAPIEndpoint(EUEndpoint)
@@ -44,23 +44,23 @@ func (c *Client) PagerdutyPost(kubearmorpayload types.KubearmorPayload) {
 	log.Printf("[INFO]  : Pagerduty - Create Incident OK\n")
 }
 
-func createPagerdutyEvent(kubearmorpayload types.KubearmorPayload, config types.PagerdutyConfig) pagerduty.V2Event {
-	details := make(map[string]interface{}, len(kubearmorpayload.OutputFields)+4)
-	details["priority"] = kubearmorpayload.EventType
-	details["source"] = kubearmorpayload.OutputFields["PodName"].(string)
-	if len(kubearmorpayload.Hostname) != 0 {
-		kubearmorpayload.OutputFields[Hostname] = kubearmorpayload.Hostname
+func createPagerdutyEvent(payload types.Payload, config types.PagerdutyConfig) pagerduty.V2Event {
+	details := make(map[string]interface{}, len(payload.OutputFields)+4)
+	details["priority"] = payload.Priority
+	details["source"] = payload.OutputFields["PodName"].(string)
+	if len(payload.Hostname) != 0 {
+		payload.OutputFields[Hostname] = payload.Hostname
 	}
-	timestamp := time.Unix(kubearmorpayload.Timestamp, 0)
+	timestamp := time.Unix(payload.Timestamp, 0)
 	event := pagerduty.V2Event{
 		RoutingKey: config.RoutingKey,
 		Action:     "trigger",
 		Payload: &pagerduty.V2Payload{
 			Source:    "Kubearmor",
-			Summary:   kubearmorpayload.EventType + " for " + kubearmorpayload.OutputFields["PodName"].(string),
+			Summary:   payload.TriggerName + " for " + payload.OutputFields["PodName"].(string),
 			Severity:  "critical",
 			Timestamp: timestamp.Format(time.RFC3339),
-			Details:   kubearmorpayload.OutputFields,
+			Details:   payload.OutputFields,
 		},
 	}
 	return event

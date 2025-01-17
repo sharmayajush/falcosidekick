@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/falcosecurity/falcosidekick/types"
 )
@@ -37,7 +36,7 @@ type slackPayload struct {
 	Attachments []slackAttachment `json:"attachments,omitempty"`
 }
 
-func newSlackPayload(kubearmorpayload types.KubearmorPayload, config *types.Configuration) slackPayload {
+func newSlackPayload(payload types.Payload, config *types.Configuration) slackPayload {
 	var (
 		messageText string
 		attachments []slackAttachment
@@ -47,26 +46,26 @@ func newSlackPayload(kubearmorpayload types.KubearmorPayload, config *types.Conf
 	)
 	if config.Slack.OutputFormat == All || config.Slack.OutputFormat == Fields || config.Slack.OutputFormat == "" {
 		field.Title = Priority
-		field.Value = kubearmorpayload.EventType
+		field.Value = payload.Priority
 		field.Short = true
 		fields = append(fields, field)
 		field.Title = Source
-		field.Value = kubearmorpayload.OutputFields["pod_name"].(string)
+		field.Value = payload.OutputFields["pod_name"].(string)
 		field.Short = true
 		fields = append(fields, field)
-		if kubearmorpayload.Hostname != "" {
+		if payload.Hostname != "" {
 			field.Title = Hostname
-			field.Value = kubearmorpayload.Hostname
+			field.Value = payload.Hostname
 			field.Short = true
 			fields = append(fields, field)
 		}
-		for _, i := range getSortedStringKeys(kubearmorpayload.OutputFields) {
-			j := kubearmorpayload.OutputFields[i]
+		for _, i := range getSortedStringKeys(payload.OutputFields) {
+			j := payload.OutputFields[i]
 			switch v := j.(type) {
 			case string:
 				field.Title = i
-				field.Value = kubearmorpayload.OutputFields[i].(string)
-				if len([]rune(kubearmorpayload.OutputFields[i].(string))) < 36 {
+				field.Value = payload.OutputFields[i].(string)
+				if len([]rune(payload.OutputFields[i].(string))) < 36 {
 					field.Short = true
 				} else {
 					field.Short = false
@@ -88,7 +87,7 @@ func newSlackPayload(kubearmorpayload types.KubearmorPayload, config *types.Conf
 
 		field.Title = Time
 		field.Short = false
-		field.Value = fmt.Sprint(kubearmorpayload.Timestamp)
+		field.Value = fmt.Sprint(payload.Timestamp)
 		fields = append(fields, field)
 
 		attachment.Footer = DefaultFooter
@@ -100,7 +99,7 @@ func newSlackPayload(kubearmorpayload types.KubearmorPayload, config *types.Conf
 
 	if config.Slack.MessageFormatTemplate != nil {
 		buf := &bytes.Buffer{}
-		if err := config.Slack.MessageFormatTemplate.Execute(buf, kubearmorpayload); err != nil {
+		if err := config.Slack.MessageFormatTemplate.Execute(buf, payload); err != nil {
 			log.Printf("[ERROR] : Slack - Error expanding Slack message %v", err)
 		} else {
 			messageText = buf.String()
@@ -108,7 +107,7 @@ func newSlackPayload(kubearmorpayload types.KubearmorPayload, config *types.Conf
 	}
 
 	var color string
-	switch kubearmorpayload.EventType {
+	switch payload.Priority {
 	case "Alert":
 		color = Orange
 	case "Log":
@@ -132,10 +131,10 @@ func newSlackPayload(kubearmorpayload types.KubearmorPayload, config *types.Conf
 }
 
 // SlackPost posts event to Slack
-func (c *Client) SlackPost(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) SlackPost(payload types.Payload) {
 	// c.Stats.Slack.Add(Total, 1)
 
-	err := c.Post(newSlackPayload(kubearmorpayload, c.Config))
+	err := c.Post(newSlackPayload(payload, c.Config))
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:slack", "status:error"})
 		// c.Stats.Slack.Add(Error, 1)
@@ -150,25 +149,26 @@ func (c *Client) SlackPost(kubearmorpayload types.KubearmorPayload) {
 	// c.PromStats.Outputs.With(map[string]string{"destination": "slack", "status": OK}).Inc()
 }
 
-func (c *Client) WatchSlackAlerts() error {
-	uid := "slack"
+// func (c *Client) WatchSlackAlerts() error {
+// 	// c.SlackPost()
+// 	// uid := "slack"
 
-	conn := make(chan types.KubearmorPayload, 1000)
-	defer close(conn)
-	addAlertStruct(uid, conn)
-	defer removeAlertStruct(uid)
+// 	// conn := make(chan types.Payload, 1000)
+// 	// defer close(conn)
+// 	// addAlertStruct(uid, conn)
+// 	// defer removeAlertStruct(uid)
 
-	for AlertRunning {
-		select {
-		// case <-Context().Done():
-		// 	return nil
-		case resp := <-conn:
-			c.SlackPost(resp)
-		default:
-			time.Sleep(time.Millisecond * 10)
+// 	// for AlertRunning {
+// 	// 	select {
+// 	// 	// case <-Context().Done():
+// 	// 	// 	return nil
+// 	// 	case resp := <-conn:
+// 	// 		c.SlackPost(resp)
+// 	// 	default:
+// 	// 		time.Sleep(time.Millisecond * 10)
 
-		}
-	}
+// 	// 	}
+// 	// }
 
-	return nil
-}
+// 	// return nil
+// }

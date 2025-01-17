@@ -13,7 +13,7 @@ import (
 )
 
 type eSPayload struct {
-	types.KubearmorPayload
+	types.Payload
 	Timestamp time.Time `json:"@timestamp"`
 }
 
@@ -30,7 +30,7 @@ type mappingError struct {
 }
 
 // ElasticsearchPost posts event to Elasticsearch
-func (c *Client) ElasticsearchPost(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) ElasticsearchPost(payload types.Payload) {
 	c.Stats.Elasticsearch.Add(Total, 1)
 
 	current := time.Now()
@@ -64,7 +64,7 @@ func (c *Client) ElasticsearchPost(kubearmorpayload types.KubearmorPayload) {
 		c.AddHeader(i, j)
 	}
 
-	err = c.Post(kubearmorpayload)
+	err = c.Post(payload)
 	if err != nil {
 		c.setElasticSearchErrorMetrics()
 		log.Printf("[ERROR] : ElasticSearch - %v\n", err)
@@ -87,7 +87,7 @@ func (c *Client) setElasticSearchErrorMetrics() {
 func (c *Client) WatchElasticsearchPostAlerts() error {
 	uid := uuid.Must(uuid.NewRandom()).String()
 
-	conn := make(chan types.KubearmorPayload, 1000)
+	conn := make(chan types.Payload, 1000)
 	defer close(conn)
 	addAlertStruct(uid, conn)
 	defer removeAlertStruct(uid)

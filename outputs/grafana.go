@@ -29,26 +29,26 @@ type grafanaOnCallPayload struct {
 // The Content-Type to send along with the request
 const GrafanaContentType = "application/json"
 
-func newGrafanaPayload(kubearmorpayload types.KubearmorPayload, config *types.Configuration) grafanaPayload {
+func newGrafanaPayload(payload types.Payload, config *types.Configuration) grafanaPayload {
 	tags := []string{
-		"kubearmor",
-		kubearmorpayload.EventType,
+		payload.ComponentName,
+		payload.TriggerName,
 	}
-	if kubearmorpayload.Hostname != "" {
-		tags = append(tags, kubearmorpayload.Hostname)
+	if payload.Hostname != "" {
+		tags = append(tags, payload.Hostname)
 	}
 
 	if config.Grafana.AllFieldsAsTags {
-		for key, i := range kubearmorpayload.OutputFields {
+		for key, i := range payload.OutputFields {
 			s := key + ": " + fmt.Sprint(i)
 			tags = append(tags, s)
 		}
 	}
 
 	g := grafanaPayload{
-		Text:    kubearmorpayload.EventType + "for pod" + kubearmorpayload.OutputFields["PodName"].(string),
-		Time:    kubearmorpayload.Timestamp / 1000000,
-		TimeEnd: kubearmorpayload.Timestamp / 1000000,
+		Text:    payload.TriggerName + "for pod" + payload.OutputFields["PodName"].(string),
+		Time:    payload.Timestamp / 1000000,
+		TimeEnd: payload.Timestamp / 1000000,
 		Tags:    tags,
 	}
 
@@ -62,17 +62,17 @@ func newGrafanaPayload(kubearmorpayload types.KubearmorPayload, config *types.Co
 	return g
 }
 
-func newGrafanaOnCallPayload(kubearmorpayload types.KubearmorPayload, config *types.Configuration) grafanaOnCallPayload {
+func newGrafanaOnCallPayload(payload types.Payload, config *types.Configuration) grafanaOnCallPayload {
 	return grafanaOnCallPayload{
-		AlertUID: kubearmorpayload.OutputFields["UID"].(string),
-		Title:    fmt.Sprintf("[%v] %v", kubearmorpayload.EventType, kubearmorpayload.OutputFields["PodName"].(string)),
+		AlertUID: payload.OutputFields["UID"].(string),
+		Title:    fmt.Sprintf("[%v] %v", payload.TriggerName, payload.OutputFields["PodName"].(string)),
 		State:    "alerting",
-		//Message:  kubearmorpayload.Output,
+		//Message:  payload.Output,
 	}
 }
 
 // GrafanaPost posts event to grafana
-func (c *Client) GrafanaPost(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) GrafanaPost(payload types.Payload) {
 	c.Stats.Grafana.Add(Total, 1)
 	c.ContentType = GrafanaContentType
 	c.httpClientLock.Lock()
@@ -82,7 +82,7 @@ func (c *Client) GrafanaPost(kubearmorpayload types.KubearmorPayload) {
 		c.AddHeader(i, j)
 	}
 
-	err := c.Post(newGrafanaPayload(kubearmorpayload, c.Config))
+	err := c.Post(newGrafanaPayload(payload, c.Config))
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:grafana", "status:error"})
 		c.Stats.Grafana.Add(Error, 1)
@@ -97,7 +97,7 @@ func (c *Client) GrafanaPost(kubearmorpayload types.KubearmorPayload) {
 }
 
 // GrafanaOnCallPost posts event to grafana onCall
-func (c *Client) GrafanaOnCallPost(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) GrafanaOnCallPost(payload types.Payload) {
 	c.Stats.GrafanaOnCall.Add(Total, 1)
 	c.ContentType = GrafanaContentType
 	c.httpClientLock.Lock()
@@ -106,7 +106,7 @@ func (c *Client) GrafanaOnCallPost(kubearmorpayload types.KubearmorPayload) {
 		c.AddHeader(i, j)
 	}
 
-	err := c.Post(newGrafanaOnCallPayload(kubearmorpayload, c.Config))
+	err := c.Post(newGrafanaOnCallPayload(payload, c.Config))
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:grafanaoncall", "status:error"})
 		c.Stats.Grafana.Add(Error, 1)
@@ -123,7 +123,7 @@ func (c *Client) GrafanaOnCallPost(kubearmorpayload types.KubearmorPayload) {
 func (c *Client) WatchGrafanaPostAlerts() error {
 	uid := uuid.Must(uuid.NewRandom()).String()
 
-	conn := make(chan types.KubearmorPayload, 1000)
+	conn := make(chan types.Payload, 1000)
 	defer close(conn)
 	addAlertStruct(uid, conn)
 	defer removeAlertStruct(uid)
@@ -144,7 +144,7 @@ func (c *Client) WatchGrafanaPostAlerts() error {
 func (c *Client) WatchGrafanaOnCallPostAlerts() error {
 	uid := uuid.Must(uuid.NewRandom()).String()
 
-	conn := make(chan types.KubearmorPayload, 1000)
+	conn := make(chan types.Payload, 1000)
 	defer close(conn)
 	addAlertStruct(uid, conn)
 	defer removeAlertStruct(uid)

@@ -48,17 +48,17 @@ func NewTimescaleDBClient(config *types.Configuration, stats *types.Statistics, 
 	}, nil
 }
 
-func newTimescaleDBPayload(kubearmorpayload types.KubearmorPayload, config *types.Configuration) timescaledbPayload {
+func newTimescaleDBPayload(payload types.Payload, config *types.Configuration) timescaledbPayload {
 	vals := make(map[string]any, 7+len(config.Customfields)+len(config.Templatedfields))
-	vals[Time] = kubearmorpayload.Timestamp
-	vals[Priority] = kubearmorpayload.EventType
-	vals["Source Pod"] = kubearmorpayload.OutputFields["PodName"].(string)
+	vals[Time] = payload.Timestamp
+	vals[Priority] = payload.Priority
+	vals["Source Pod"] = payload.OutputFields["PodName"].(string)
 
-	if kubearmorpayload.Hostname != "" {
-		vals[Hostname] = kubearmorpayload.Hostname
+	if payload.Hostname != "" {
+		vals[Hostname] = payload.Hostname
 	}
 
-	for i, j := range kubearmorpayload.OutputFields {
+	for i, j := range payload.OutputFields {
 		switch v := j.(type) {
 		case string:
 			for k := range config.Customfields {
@@ -105,11 +105,11 @@ func newTimescaleDBPayload(kubearmorpayload types.KubearmorPayload, config *type
 	return timescaledbPayload{SQL: sql, Values: retVals}
 }
 
-func (c *Client) TimescaleDBPost(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) TimescaleDBPost(payload types.Payload) {
 	c.Stats.TimescaleDB.Add(Total, 1)
 
 	var ctx = context.Background()
-	tsdbPayload := newTimescaleDBPayload(kubearmorpayload, c.Config)
+	tsdbPayload := newTimescaleDBPayload(payload, c.Config)
 	_, err := c.TimescaleDBClient.Exec(ctx, tsdbPayload.SQL, tsdbPayload.Values...)
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:timescaledb", "status:error"})
@@ -131,7 +131,7 @@ func (c *Client) TimescaleDBPost(kubearmorpayload types.KubearmorPayload) {
 func (c *Client) WatchTimescaleDBPostAlerts() error {
 	uid := uuid.Must(uuid.NewRandom()).String()
 
-	conn := make(chan types.KubearmorPayload, 1000)
+	conn := make(chan types.Payload, 1000)
 	defer close(conn)
 	addAlertStruct(uid, conn)
 	defer removeAlertStruct(uid)

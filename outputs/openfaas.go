@@ -53,11 +53,11 @@ func NewOpenfaasClient(config *types.Configuration, stats *types.Statistics, pro
 }
 
 // OpenfaasCall .
-func (c *Client) OpenfaasCall(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) OpenfaasCall(payload types.Payload) {
 	c.Stats.Openfaas.Add(Total, 1)
 
 	if c.Config.Openfaas.Kubeconfig != "" {
-		str, _ := json.Marshal(kubearmorpayload)
+		str, _ := json.Marshal(payload)
 		req := c.KubernetesClient.CoreV1().RESTClient().Post().AbsPath("/api/v1/namespaces/" + c.Config.Openfaas.GatewayNamespace + "/services/" + c.Config.Openfaas.GatewayService + ":" + strconv.Itoa(c.Config.Openfaas.GatewayPort) + "/proxy" + "/function/" + c.Config.Openfaas.FunctionName + "." + c.Config.Openfaas.FunctionNamespace).Body(str)
 		req.SetHeader("event-id", uuid.New().String())
 		req.SetHeader("Content-Type", "application/json")
@@ -74,7 +74,7 @@ func (c *Client) OpenfaasCall(kubearmorpayload types.KubearmorPayload) {
 		}
 		log.Printf("[INFO]  : %v - Function Response : %v\n", Openfaas, string(rawbody))
 	} else {
-		err := c.Post(kubearmorpayload)
+		err := c.Post(payload)
 		if err != nil {
 			go c.CountMetric(Outputs, 1, []string{"output:openfaas", "status:error"})
 			c.Stats.Openfaas.Add(Error, 1)

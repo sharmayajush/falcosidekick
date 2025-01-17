@@ -64,8 +64,8 @@ func NewYandexClient(config *types.Configuration, stats *types.Statistics, promS
 }
 
 // UploadYandexS3 uploads payload to Yandex S3
-func (c *Client) UploadYandexS3(kubearmorpayload types.KubearmorPayload) {
-	f, _ := json.Marshal(kubearmorpayload)
+func (c *Client) UploadYandexS3(payload types.Payload) {
+	f, _ := json.Marshal(payload)
 	prefix := ""
 	t := time.Now()
 	if c.Config.Yandex.S3.Prefix != "" {
@@ -91,10 +91,10 @@ func (c *Client) UploadYandexS3(kubearmorpayload types.KubearmorPayload) {
 }
 
 // UploadYandexDataStreams uploads payload to Yandex Data Streams
-func (c *Client) UploadYandexDataStreams(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) UploadYandexDataStreams(payload types.Payload) {
 	svc := kinesis.New(c.AWSSession)
 
-	f, _ := json.Marshal(kubearmorpayload)
+	f, _ := json.Marshal(payload)
 	input := &kinesis.PutRecordInput{
 		Data:         f,
 		PartitionKey: aws.String(uuid.NewString()),

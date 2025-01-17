@@ -34,12 +34,12 @@ var (
 	reg = regexp.MustCompile("[^a-zA-Z0-9_]")
 )
 
-func newAlertmanagerPayload(KubearmorPayload types.KubearmorPayload, config *types.Configuration) []alertmanagerPayload {
+func newAlertmanagerPayload(Payload types.Payload, config *types.Configuration) []alertmanagerPayload {
 	var amPayload alertmanagerPayload
 	amPayload.Labels = make(map[string]string)
 	amPayload.Annotations = make(map[string]string)
 
-	for i, j := range KubearmorPayload.OutputFields {
+	for i, j := range Payload.OutputFields {
 		switch v := j.(type) {
 		case string:
 			jj := j.(string)
@@ -54,7 +54,7 @@ func newAlertmanagerPayload(KubearmorPayload types.KubearmorPayload, config *typ
 	amPayload.Labels["source"] = "Kubearmor"
 
 	if config.Alertmanager.ExpiresAfter != 0 {
-		timestamp := time.Unix(KubearmorPayload.Timestamp, 0)
+		timestamp := time.Unix(Payload.Timestamp, 0)
 		amPayload.EndsAt = timestamp.Add(time.Duration(config.Alertmanager.ExpiresAfter) * time.Second)
 	}
 	for label, value := range config.Alertmanager.ExtraLabels {
@@ -72,7 +72,7 @@ func newAlertmanagerPayload(KubearmorPayload types.KubearmorPayload, config *typ
 }
 
 // AlertmanagerPost posts event to AlertManager
-func (c *Client) AlertmanagerPost(KubearmorPayload types.KubearmorPayload) {
+func (c *Client) AlertmanagerPost(Payload types.Payload) {
 	c.Stats.Alertmanager.Add(Total, 1)
 	c.httpClientLock.Lock()
 	defer c.httpClientLock.Unlock()
@@ -80,7 +80,7 @@ func (c *Client) AlertmanagerPost(KubearmorPayload types.KubearmorPayload) {
 		c.AddHeader(i, j)
 	}
 
-	err := c.Post(newAlertmanagerPayload(KubearmorPayload, c.Config))
+	err := c.Post(newAlertmanagerPayload(Payload, c.Config))
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:alertmanager", "status:error"})
 		c.Stats.Alertmanager.Add(Error, 1)
@@ -108,7 +108,7 @@ func alertmanagerSafeLabel(label string) string {
 func (c *Client) WatchAlertmanagerPostAlerts() error {
 	uid := "Alertmaneger"
 
-	conn := make(chan types.KubearmorPayload, 1000)
+	conn := make(chan types.Payload, 1000)
 	defer close(conn)
 	addAlertStruct(uid, conn)
 	defer removeAlertStruct(uid)

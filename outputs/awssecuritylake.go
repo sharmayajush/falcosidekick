@@ -99,7 +99,7 @@ type OCSFProduct struct {
 	Name       string `json:"name" parquet:"name=name, type=BYTE_ARRAY, convertedtype=UTF8"`
 }
 
-func NewOCSFSecurityFinding(kubearmorpayload types.KubearmorPayload) OCSFSecurityFinding {
+func NewOCSFSecurityFinding(payload types.Payload) OCSFSecurityFinding {
 	ocsfsf := OCSFSecurityFinding{
 		ActivityID:   1,
 		ActivityName: "Generate",
@@ -109,28 +109,28 @@ func NewOCSFSecurityFinding(kubearmorpayload types.KubearmorPayload) OCSFSecurit
 		ClassUID:     2001,
 		TypeUID:      200101,
 		TypeName:     "Security Finding: Generate",
-		// Attacks: getMitreAttacke(kubearmorpayload.Tags),
+		// Attacks: getMitreAttacke(payload.Tags),
 		Metadata: OCSFMetadata{
-			Labels: []string{kubearmorpayload.OutputFields["Labels"].(string)},
+			Labels: []string{payload.OutputFields["Labels"].(string)},
 			Product: OCSFProduct{
-				Name:       "Kubearmor",
+				Name:       payload.ComponentName,
 				VendorName: "Accuknox",
 			},
 			Version: schemaVersion,
 		},
-		RawData: kubearmorpayload.String(),
+		RawData: payload.String(),
 		State:   "New",
 		StateID: 1,
 		Finding: OCSFFIndingDetails{
-			CreatedTime: kubearmorpayload.Timestamp,
-			Desc:        kubearmorpayload.EventType,
-			Title:       kubearmorpayload.OutputFields["PodName"].(string) + "-" + kubearmorpayload.EventType,
-			UID:         kubearmorpayload.OutputFields["UID"].(string),
+			CreatedTime: payload.Timestamp,
+			Desc:        payload.FilterQuery,
+			Title:       payload.OutputFields["PodName"].(string) + "-" + payload.TriggerName,
+			UID:         payload.OutputFields["UID"].(string),
 		},
-		Message:     kubearmorpayload.EventType + "-" + kubearmorpayload.ClusterName + "-" + kubearmorpayload.OutputFields["PodName"].(string),
-		Observables: getObservables(kubearmorpayload.Hostname, kubearmorpayload.OutputFields),
-		Timestamp:   kubearmorpayload.Timestamp,
-		Status:      kubearmorpayload.EventType,
+		Message:     payload.TriggerName + "-" + payload.ClusterName + "-" + payload.OutputFields["PodName"].(string),
+		Observables: getObservables(payload.Hostname, payload.OutputFields),
+		Timestamp:   payload.Timestamp,
+		Status:      payload.ClusterName,
 	}
 
 	ocsfsf.SeverityID, ocsfsf.Severity = 0, ""
@@ -196,8 +196,8 @@ func getAWSSecurityLakeSeverity(priority types.PriorityType) (int32, string) {
 // 	return ocsfa
 // }
 
-func (c *Client) EnqueueSecurityLake(kubearmorpayload types.KubearmorPayload) {
-	offset, err := c.Config.AWS.SecurityLake.Memlog.Write(c.Config.AWS.SecurityLake.Ctx, []byte(kubearmorpayload.String()))
+func (c *Client) EnqueueSecurityLake(payload types.Payload) {
+	offset, err := c.Config.AWS.SecurityLake.Memlog.Write(c.Config.AWS.SecurityLake.Ctx, []byte(payload.String()))
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:awssecuritylake.", "status:error"})
 		c.Stats.AWSSecurityLake.Add(Error, 1)
@@ -205,7 +205,7 @@ func (c *Client) EnqueueSecurityLake(kubearmorpayload types.KubearmorPayload) {
 		log.Printf("[ERROR] : %v SecurityLake - %v\n", c.OutputType, err)
 		return
 	}
-	log.Printf("[INFO]  : %v SecurityLake - Event queued (%v)\n", c.OutputType, kubearmorpayload.OutputFields["UID"].(string))
+	log.Printf("[INFO]  : %v SecurityLake - Event queued (%v)\n", c.OutputType, payload.OutputFields["UID"].(string))
 	*c.Config.AWS.SecurityLake.WriteOffset = offset
 }
 
@@ -322,7 +322,7 @@ func (c *Client) writeParquet(uid string, records []memlog.Record) error {
 		return err
 	}
 	for _, i := range records {
-		var f types.KubearmorPayload
+		var f types.Payload
 		if err := json.Unmarshal(i.Data, &f); err != nil {
 			log.Printf("[ERROR] : %v SecurityLake - Unmarshalling error: %v\n", c.OutputType, err)
 			continue
@@ -347,7 +347,7 @@ func (c *Client) writeParquet(uid string, records []memlog.Record) error {
 func (c *Client) WatchEnqueueSecurityLakeAlerts() error {
 	uid := uuid.Must(uuid.NewRandom()).String()
 
-	conn := make(chan types.KubearmorPayload, 1000)
+	conn := make(chan types.Payload, 1000)
 	defer close(conn)
 	addAlertStruct(uid, conn)
 	defer removeAlertStruct(uid)

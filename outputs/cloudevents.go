@@ -14,7 +14,7 @@ import (
 )
 
 // CloudEventsSend produces a CloudEvent and sends to the CloudEvents consumers.
-func (c *Client) CloudEventsSend(KubearmorPayload types.KubearmorPayload) {
+func (c *Client) CloudEventsSend(Payload types.Payload) {
 	c.Stats.CloudEvents.Add(Total, 1)
 
 	if c.CloudEventsClient == nil {
@@ -30,12 +30,12 @@ func (c *Client) CloudEventsSend(KubearmorPayload types.KubearmorPayload) {
 	ctx := cloudevents.ContextWithTarget(context.Background(), c.EndpointURL.String())
 
 	event := cloudevents.NewEvent()
-	event.SetTime(time.Unix(KubearmorPayload.Timestamp, 0))
+	event.SetTime(time.Unix(Payload.Timestamp, 0))
 	event.SetSource("https://kubearmor.io/") // TODO: this should have some info on the server that made the event.
 	event.SetType("kubearmor.rule.output.v1")
-	event.SetExtension("priority", KubearmorPayload.EventType)
-	if KubearmorPayload.Hostname != "" {
-		event.SetExtension(Hostname, KubearmorPayload.Hostname)
+	event.SetExtension("priority", Payload.Priority)
+	if Payload.Hostname != "" {
+		event.SetExtension(Hostname, Payload.Hostname)
 	}
 
 	// Set Extensions.
@@ -43,7 +43,7 @@ func (c *Client) CloudEventsSend(KubearmorPayload types.KubearmorPayload) {
 		event.SetExtension(k, v)
 	}
 
-	if err := event.SetData(cloudevents.ApplicationJSON, KubearmorPayload); err != nil {
+	if err := event.SetData(cloudevents.ApplicationJSON, Payload); err != nil {
 		log.Printf("[ERROR] : CloudEvents, failed to set data : %v\n", err)
 	}
 
@@ -65,7 +65,7 @@ func (c *Client) CloudEventsSend(KubearmorPayload types.KubearmorPayload) {
 func (c *Client) WatchCloudEventsSendAlerts() error {
 	uid := uuid.Must(uuid.NewRandom()).String()
 
-	conn := make(chan types.KubearmorPayload, 1000)
+	conn := make(chan types.Payload, 1000)
 	defer close(conn)
 	addAlertStruct(uid, conn)
 	defer removeAlertStruct(uid)

@@ -49,14 +49,14 @@ func NewSMTPClient(config *types.Configuration, stats *types.Statistics, promSta
 	}, nil
 }
 
-func newSMTPPayload(KubearmorPayload types.KubearmorPayload, config *types.Configuration) SMTPPayload {
+func newSMTPPayload(Payload types.Payload, config *types.Configuration) SMTPPayload {
 	s := SMTPPayload{
 		From:    "From: " + config.SMTP.From,
 		To:      "To: " + config.SMTP.To,
 		Subject: "Subject: " + "Alert : " + "triggerName",
 	}
 
-	time := time.Unix(KubearmorPayload.Timestamp, 0)
+	time := time.Unix(Payload.Timestamp, 0)
 
 	s.Body = "From: " + config.SMTP.From + "\n"
 	s.Body += "To: " + config.SMTP.To + "\n"
@@ -72,7 +72,7 @@ func newSMTPPayload(KubearmorPayload types.KubearmorPayload, config *types.Confi
 	ttmpl := textTemplate.New(Text)
 	ttmpl, _ = ttmpl.Parse(plaintextTmpl)
 	var outtext bytes.Buffer
-	err := ttmpl.Execute(&outtext, KubearmorPayload)
+	err := ttmpl.Execute(&outtext, Payload)
 	if err != nil {
 		log.Printf("[ERROR] : SMTP - %v\n", err)
 		return s
@@ -88,7 +88,7 @@ func newSMTPPayload(KubearmorPayload types.KubearmorPayload, config *types.Confi
 	htmpl := htmlTemplate.New("html")
 	htmpl, _ = htmpl.Parse(HtmlTmpl)
 	var outhtml bytes.Buffer
-	err = htmpl.Execute(&outhtml, KubearmorPayload)
+	err = htmpl.Execute(&outhtml, Payload)
 	if err != nil {
 		log.Printf("[ERROR] : SMTP - %v\n", err)
 		return s
@@ -130,8 +130,8 @@ func (c *Client) GetAuth() (sasl.Client, error) {
 }
 
 // SendMail sends email to SMTP server
-func (c *Client) SendMail(KubearmorPayload types.KubearmorPayload) {
-	sp := newSMTPPayload(KubearmorPayload, c.Config)
+func (c *Client) SendMail(Payload types.Payload) {
+	sp := newSMTPPayload(Payload, c.Config)
 
 	to := strings.Split(strings.ReplaceAll(c.Config.SMTP.To, " ", ""), ",")
 
@@ -186,7 +186,7 @@ func (c *Client) SendMail(KubearmorPayload types.KubearmorPayload) {
 func (c *Client) WatchSmtpAlerts() error {
 	uid := "email"
 
-	conn := make(chan types.KubearmorPayload, 1000)
+	conn := make(chan types.Payload, 1000)
 	defer close(conn)
 	addAlertStruct(uid, conn)
 	defer removeAlertStruct(uid)

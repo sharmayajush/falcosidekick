@@ -12,7 +12,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func newRocketchatPayload(kubearmorpayload types.KubearmorPayload, config *types.Configuration) slackPayload {
+func newRocketchatPayload(payload types.Payload, config *types.Configuration) slackPayload {
 	var (
 		messageText string
 		attachments []slackAttachment
@@ -23,21 +23,21 @@ func newRocketchatPayload(kubearmorpayload types.KubearmorPayload, config *types
 
 	if config.Rocketchat.OutputFormat == All || config.Rocketchat.OutputFormat == Fields || config.Rocketchat.OutputFormat == "" {
 		field.Title = Priority
-		field.Value = kubearmorpayload.EventType
+		field.Value = payload.Priority
 		field.Short = true
 		fields = append(fields, field)
 		field.Title = Source
-		field.Value = kubearmorpayload.OutputFields["PodName"].(string)
+		field.Value = payload.OutputFields["PodName"].(string)
 		field.Short = true
 		fields = append(fields, field)
 
-		for _, i := range getSortedStringKeys(kubearmorpayload.OutputFields) {
-			j := kubearmorpayload.OutputFields[i]
+		for _, i := range getSortedStringKeys(payload.OutputFields) {
+			j := payload.OutputFields[i]
 			switch v := j.(type) {
 			case string:
 				field.Title = i
-				field.Value = kubearmorpayload.OutputFields[i].(string)
-				if len([]rune(kubearmorpayload.OutputFields[i].(string))) < 36 {
+				field.Value = payload.OutputFields[i].(string)
+				if len([]rune(payload.OutputFields[i].(string))) < 36 {
 					field.Short = true
 				} else {
 					field.Short = false
@@ -58,11 +58,11 @@ func newRocketchatPayload(kubearmorpayload types.KubearmorPayload, config *types
 
 		field.Title = Time
 		field.Short = false
-		field.Value = fmt.Sprint(kubearmorpayload.Timestamp)
+		field.Value = fmt.Sprint(payload.Timestamp)
 		fields = append(fields, field)
-		if kubearmorpayload.Hostname != "" {
+		if payload.Hostname != "" {
 			field.Title = Hostname
-			field.Value = kubearmorpayload.Hostname
+			field.Value = payload.Hostname
 			field.Short = true
 			fields = append(fields, field)
 		}
@@ -70,7 +70,7 @@ func newRocketchatPayload(kubearmorpayload types.KubearmorPayload, config *types
 
 	if config.Rocketchat.MessageFormatTemplate != nil {
 		buf := &bytes.Buffer{}
-		if err := config.Rocketchat.MessageFormatTemplate.Execute(buf, kubearmorpayload); err != nil {
+		if err := config.Rocketchat.MessageFormatTemplate.Execute(buf, payload); err != nil {
 			log.Printf("[ERROR] : RocketChat - Error expanding RocketChat message %v", err)
 		} else {
 			messageText = buf.String()
@@ -79,7 +79,7 @@ func newRocketchatPayload(kubearmorpayload types.KubearmorPayload, config *types
 
 	if config.Rocketchat.OutputFormat == All || config.Rocketchat.OutputFormat == Fields || config.Rocketchat.OutputFormat == "" {
 		var color string
-		switch kubearmorpayload.EventType {
+		switch payload.Priority {
 		case "Alert":
 			color = Orange
 		case "Log":
@@ -105,10 +105,10 @@ func newRocketchatPayload(kubearmorpayload types.KubearmorPayload, config *types
 }
 
 // RocketchatPost posts event to Rocketchat
-func (c *Client) RocketchatPost(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) RocketchatPost(payload types.Payload) {
 	c.Stats.Rocketchat.Add(Total, 1)
 
-	err := c.Post(newRocketchatPayload(kubearmorpayload, c.Config))
+	err := c.Post(newRocketchatPayload(payload, c.Config))
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:rocketchat", "status:error"})
 		c.Stats.Rocketchat.Add(Error, 1)
@@ -126,7 +126,7 @@ func (c *Client) RocketchatPost(kubearmorpayload types.KubearmorPayload) {
 func (c *Client) WatchRocketchatPostAlerts() error {
 	uid := uuid.Must(uuid.NewRandom()).String()
 
-	conn := make(chan types.KubearmorPayload, 1000)
+	conn := make(chan types.Payload, 1000)
 	defer close(conn)
 	addAlertStruct(uid, conn)
 	defer removeAlertStruct(uid)

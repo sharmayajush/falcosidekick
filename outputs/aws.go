@@ -119,10 +119,10 @@ func NewAWSClient(config *types.Configuration, stats *types.Statistics, promStat
 }
 
 // InvokeLambda invokes a lambda function
-func (c *Client) InvokeLambda(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) InvokeLambda(payload types.Payload) {
 	svc := lambda.New(c.AWSSession)
 
-	f, _ := json.Marshal(kubearmorpayload)
+	f, _ := json.Marshal(payload)
 
 	input := &lambda.InvokeInput{
 		FunctionName:   aws.String(c.Config.AWS.Lambda.FunctionName),
@@ -154,10 +154,10 @@ func (c *Client) InvokeLambda(kubearmorpayload types.KubearmorPayload) {
 }
 
 // SendMessage sends a message to SQS Queue
-func (c *Client) SendMessage(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) SendMessage(payload types.Payload) {
 	svc := sqs.New(c.AWSSession)
 
-	f, _ := json.Marshal(kubearmorpayload)
+	f, _ := json.Marshal(payload)
 
 	input := &sqs.SendMessageInput{
 		MessageBody: aws.String(string(f)),
@@ -186,8 +186,8 @@ func (c *Client) SendMessage(kubearmorpayload types.KubearmorPayload) {
 }
 
 // UploadS3 upload payload to S3
-func (c *Client) UploadS3(kubearmorpayload types.KubearmorPayload) {
-	f, _ := json.Marshal(kubearmorpayload)
+func (c *Client) UploadS3(payload types.Payload) {
+	f, _ := json.Marshal(payload)
 
 	prefix := ""
 	t := time.Now()
@@ -220,30 +220,30 @@ func (c *Client) UploadS3(kubearmorpayload types.KubearmorPayload) {
 }
 
 // PublishTopic sends a message to a SNS Topic
-func (c *Client) PublishTopic(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) PublishTopic(payload types.Payload) {
 	svc := sns.New(c.AWSSession)
 
 	var msg *sns.PublishInput
 
 	if c.Config.AWS.SNS.RawJSON {
-		f, _ := json.Marshal(kubearmorpayload)
+		f, _ := json.Marshal(payload)
 		msg = &sns.PublishInput{
 			Message:  aws.String(string(f)),
 			TopicArn: aws.String(c.Config.AWS.SNS.TopicArn),
 		}
 	} else {
 		msg = &sns.PublishInput{
-			Message:  aws.String(kubearmorpayload.EventType),
+			Message:  aws.String(payload.TriggerName),
 			TopicArn: aws.String(c.Config.AWS.SNS.TopicArn),
 		}
 
-		if kubearmorpayload.Hostname != "" {
+		if payload.Hostname != "" {
 			msg.MessageAttributes[Hostname] = &sns.MessageAttributeValue{
 				DataType:    aws.String("String"),
-				StringValue: aws.String(kubearmorpayload.Hostname),
+				StringValue: aws.String(payload.Hostname),
 			}
 		}
-		for i, j := range kubearmorpayload.OutputFields {
+		for i, j := range payload.OutputFields {
 			msg.MessageAttributes[i] = &sns.MessageAttributeValue{
 				DataType:    aws.String("String"),
 				StringValue: aws.String(fmt.Sprintf("%v", j)),
@@ -273,10 +273,10 @@ func (c *Client) PublishTopic(kubearmorpayload types.KubearmorPayload) {
 }
 
 // SendCloudWatchLog sends a message to CloudWatch Log
-func (c *Client) SendCloudWatchLog(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) SendCloudWatchLog(payload types.Payload) {
 	svc := cloudwatchlogs.New(c.AWSSession)
 
-	f, _ := json.Marshal(kubearmorpayload)
+	f, _ := json.Marshal(payload)
 
 	c.Stats.AWSCloudWatchLogs.Add(Total, 1)
 
@@ -306,7 +306,7 @@ func (c *Client) SendCloudWatchLog(kubearmorpayload types.KubearmorPayload) {
 
 	logevent := &cloudwatchlogs.InputLogEvent{
 		Message:   aws.String(string(f)),
-		Timestamp: aws.Int64(kubearmorpayload.Timestamp / int64(time.Millisecond)),
+		Timestamp: aws.Int64(payload.Timestamp / int64(time.Millisecond)),
 	}
 
 	input := &cloudwatchlogs.PutLogEventsInput{
@@ -349,12 +349,12 @@ func (c *Client) putLogEvents(svc *cloudwatchlogs.CloudWatchLogs, input *cloudwa
 }
 
 // PutRecord puts a record in Kinesis
-func (c *Client) PutRecord(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) PutRecord(payload types.Payload) {
 	svc := kinesis.New(c.AWSSession)
 
 	c.Stats.AWSKinesis.Add(Total, 1)
 
-	f, _ := json.Marshal(kubearmorpayload)
+	f, _ := json.Marshal(payload)
 	input := &kinesis.PutRecordInput{
 		Data:         f,
 		PartitionKey: aws.String(uuid.NewString()),
@@ -380,7 +380,7 @@ func (c *Client) PutRecord(kubearmorpayload types.KubearmorPayload) {
 func (c *Client) WatchInvokeLambdaAlerts() error {
 	uid := uuid.Must(uuid.NewRandom()).String()
 
-	conn := make(chan types.KubearmorPayload, 1000)
+	conn := make(chan types.Payload, 1000)
 	defer close(conn)
 	addAlertStruct(uid, conn)
 	defer removeAlertStruct(uid)
@@ -404,7 +404,7 @@ func (c *Client) WatchInvokeLambdaAlerts() error {
 func (c *Client) WatchSendMessageAlerts() error {
 	uid := uuid.Must(uuid.NewRandom()).String()
 
-	conn := make(chan types.KubearmorPayload, 1000)
+	conn := make(chan types.Payload, 1000)
 	defer close(conn)
 	addAlertStruct(uid, conn)
 	defer removeAlertStruct(uid)
@@ -428,7 +428,7 @@ func (c *Client) WatchSendMessageAlerts() error {
 func (c *Client) WatchPublishTopicAlerts() error {
 	uid := uuid.Must(uuid.NewRandom()).String()
 
-	conn := make(chan types.KubearmorPayload, 1000)
+	conn := make(chan types.Payload, 1000)
 	defer close(conn)
 	addAlertStruct(uid, conn)
 	defer removeAlertStruct(uid)
@@ -452,7 +452,7 @@ func (c *Client) WatchPublishTopicAlerts() error {
 func (c *Client) WatchSendCloudWatchLogAlerts() error {
 	uid := uuid.Must(uuid.NewRandom()).String()
 
-	conn := make(chan types.KubearmorPayload, 1000)
+	conn := make(chan types.Payload, 1000)
 	defer close(conn)
 	addAlertStruct(uid, conn)
 	defer removeAlertStruct(uid)
@@ -476,7 +476,7 @@ func (c *Client) WatchSendCloudWatchLogAlerts() error {
 func (c *Client) WatchUploadS3Alerts() error {
 	uid := uuid.Must(uuid.NewRandom()).String()
 
-	conn := make(chan types.KubearmorPayload, 1000)
+	conn := make(chan types.Payload, 1000)
 	defer close(conn)
 	addAlertStruct(uid, conn)
 	defer removeAlertStruct(uid)
@@ -499,7 +499,7 @@ func (c *Client) WatchUploadS3Alerts() error {
 func (c *Client) WatchPutRecordAlerts() error {
 	uid := uuid.Must(uuid.NewRandom()).String()
 
-	conn := make(chan types.KubearmorPayload, 1000)
+	conn := make(chan types.Payload, 1000)
 	defer close(conn)
 	addAlertStruct(uid, conn)
 	defer removeAlertStruct(uid)

@@ -19,7 +19,7 @@ func TestNewTelegramPayload(t *testing.T) {
 		ChatID:                "-987654321",
 	}
 
-	var f types.KubearmorPayload
+	var f types.Payload
 	require.Nil(t, json.Unmarshal([]byte(falcoTestInput), &f))
 	config := &types.Configuration{
 		Telegram: types.TelegramConfig{

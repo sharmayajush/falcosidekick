@@ -146,10 +146,10 @@ func NewKafkaClient(config *types.Configuration, stats *types.Statistics, promSt
 }
 
 // KafkaProduce sends a message to a Apach Kafka Topic
-func (c *Client) KafkaProduce(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) KafkaProduce(payload types.Payload) {
 	c.Stats.Kafka.Add(Total, 1)
 
-	Msg, err := json.Marshal(kubearmorpayload)
+	Msg, err := json.Marshal(payload)
 	if err != nil {
 		c.incrKafkaErrorMetrics(1)
 		log.Printf("[ERROR] : Kafka - %v - %v\n", "failed to marshalling message", err.Error())
@@ -200,7 +200,7 @@ func (c *Client) incrKafkaErrorMetrics(add int) {
 func (c *Client) WatchKafkaProduceAlerts() error {
 	uid := uuid.Must(uuid.NewRandom()).String()
 
-	conn := make(chan types.KubearmorPayload, 1000)
+	conn := make(chan types.Payload, 1000)
 	defer close(conn)
 	addAlertStruct(uid, conn)
 	defer removeAlertStruct(uid)

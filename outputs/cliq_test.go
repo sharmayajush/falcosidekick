@@ -59,7 +59,7 @@ func TestNewCliqPayload(t *testing.T) {
 		},
 	}
 
-	var f types.KubearmorPayload
+	var f types.Payload
 	require.Nil(t, json.Unmarshal([]byte(falcoTestInput), &f))
 	config := &types.Configuration{
 		Cliq: types.CliqOutputConfig{

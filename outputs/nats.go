@@ -18,7 +18,7 @@ import (
 var slugRegularExpression = regexp.MustCompile("[^a-z0-9]+")
 
 // NatsPublish publishes event to NATS
-func (c *Client) NatsPublish(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) NatsPublish(payload types.Payload) {
 	c.Stats.Nats.Add(Total, 1)
 
 	nc, err := nats.Connect(c.EndpointURL.String())
@@ -30,14 +30,14 @@ func (c *Client) NatsPublish(kubearmorpayload types.KubearmorPayload) {
 	defer nc.Flush()
 	defer nc.Close()
 
-	j, err := json.Marshal(kubearmorpayload)
+	j, err := json.Marshal(payload)
 	if err != nil {
 		c.setStanErrorMetrics()
 		log.Printf("[ERROR] : STAN - %v\n", err.Error())
 		return
 	}
 
-	err = nc.Publish("kubearmor."+strings.ToLower(kubearmorpayload.EventType), j)
+	err = nc.Publish(strings.ToLower(payload.ComponentName)+"."+strings.ToLower(payload.TriggerName), j)
 	if err != nil {
 		c.setNatsErrorMetrics()
 		log.Printf("[ERROR] : NATS - %v\n", err)
@@ -60,7 +60,7 @@ func (c *Client) setNatsErrorMetrics() {
 func (c *Client) WatchNatsPublishAlerts() error {
 	uid := uuid.Must(uuid.NewRandom()).String()
 
-	conn := make(chan types.KubearmorPayload, 1000)
+	conn := make(chan types.Payload, 1000)
 	defer close(conn)
 	addAlertStruct(uid, conn)
 	defer removeAlertStruct(uid)

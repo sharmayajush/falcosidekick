@@ -24,12 +24,12 @@ type lokiValue = []string
 // The Content-Type to send along with the request
 const LokiContentType = "application/json"
 
-func newLokiPayload(kubearmorpayload types.KubearmorPayload, config *types.Configuration) lokiPayload {
-	s := make(map[string]string, 3+len(kubearmorpayload.OutputFields)+len(config.Loki.ExtraLabelsList))
-	s["source"] = kubearmorpayload.OutputFields["PodName"].(string)
-	s["priority"] = kubearmorpayload.EventType
+func newLokiPayload(payload types.Payload, config *types.Configuration) lokiPayload {
+	s := make(map[string]string, 3+len(payload.OutputFields)+len(config.Loki.ExtraLabelsList))
+	s["source"] = payload.OutputFields["PodName"].(string)
+	s["priority"] = payload.Priority
 
-	for i, j := range kubearmorpayload.OutputFields {
+	for i, j := range payload.OutputFields {
 		switch v := j.(type) {
 		case string:
 			for k := range config.Customfields {
@@ -58,20 +58,20 @@ func newLokiPayload(kubearmorpayload types.KubearmorPayload, config *types.Confi
 		}
 	}
 
-	if kubearmorpayload.Hostname != "" {
-		s[Hostname] = kubearmorpayload.Hostname
+	if payload.Hostname != "" {
+		s[Hostname] = payload.Hostname
 	}
 
 	return lokiPayload{Streams: []lokiStream{
 		{
 			Stream: s,
-			Values: []lokiValue{[]string{fmt.Sprintf("%v", kubearmorpayload.Timestamp)}},
+			Values: []lokiValue{[]string{fmt.Sprintf("%v", payload.Timestamp)}},
 		},
 	}}
 }
 
 // LokiPost posts event to Loki
-func (c *Client) LokiPost(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) LokiPost(payload types.Payload) {
 	c.Stats.Loki.Add(Total, 1)
 	c.ContentType = LokiContentType
 	if c.Config.Loki.Tenant != "" {
@@ -90,7 +90,7 @@ func (c *Client) LokiPost(kubearmorpayload types.KubearmorPayload) {
 		c.AddHeader(i, j)
 	}
 
-	err := c.Post(newLokiPayload(kubearmorpayload, c.Config))
+	err := c.Post(newLokiPayload(payload, c.Config))
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:loki", "status:error"})
 		c.Stats.Loki.Add(Error, 1)

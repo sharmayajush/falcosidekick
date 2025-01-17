@@ -108,11 +108,11 @@ func NewGCPClient(config *types.Configuration, stats *types.Statistics, promStat
 }
 
 // GCPCallCloudFunction calls the given Cloud Function
-func (c *Client) GCPCallCloudFunction(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) GCPCallCloudFunction(payload types.Payload) {
 	c.Stats.GCPCloudFunctions.Add(Total, 1)
 
-	payload, _ := json.Marshal(kubearmorpayload)
-	data := string(payload)
+	gcpPayload, _ := json.Marshal(payload)
+	data := string(gcpPayload)
 
 	result, err := c.GCPCloudFunctionsClient.CallFunction(context.Background(), &gcpfunctionspb.CallFunctionRequest{
 		Name: c.Config.GCP.CloudFunctions.Name,
@@ -135,12 +135,12 @@ func (c *Client) GCPCallCloudFunction(kubearmorpayload types.KubearmorPayload) {
 }
 
 // GCPPublishTopic sends a message to a GCP PubSub Topic
-func (c *Client) GCPPublishTopic(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) GCPPublishTopic(payload types.Payload) {
 	c.Stats.GCPPubSub.Add(Total, 1)
 
-	payload, _ := json.Marshal(kubearmorpayload)
+	gcpPayload, _ := json.Marshal(payload)
 	message := &pubsub.Message{
-		Data:       payload,
+		Data:       gcpPayload,
 		Attributes: c.Config.GCP.PubSub.CustomAttributes,
 	}
 
@@ -162,10 +162,10 @@ func (c *Client) GCPPublishTopic(kubearmorpayload types.KubearmorPayload) {
 }
 
 // UploadGCS upload payload to
-func (c *Client) UploadGCS(kubearmorpayload types.KubearmorPayload) {
+func (c *Client) UploadGCS(payload types.Payload) {
 	c.Stats.GCPStorage.Add(Total, 1)
 
-	payload, _ := json.Marshal(kubearmorpayload)
+	gcpPayload, _ := json.Marshal(payload)
 
 	prefix := ""
 	t := time.Now()
@@ -176,7 +176,7 @@ func (c *Client) UploadGCS(kubearmorpayload types.KubearmorPayload) {
 	key := fmt.Sprintf("%s/%s/%s.json", prefix, t.Format("2006-01-02"), t.Format(time.RFC3339Nano))
 	bucketWriter := c.GCSStorageClient.Bucket(c.Config.GCP.Storage.Bucket).Object(key).NewWriter(context.Background())
 	defer bucketWriter.Close()
-	_, err := bucketWriter.Write(payload)
+	_, err := bucketWriter.Write(gcpPayload)
 	if err != nil {
 		log.Printf("[ERROR] : GCPStorage - %v - %v\n", "Error while Uploading message", err.Error())
 		c.Stats.GCPStorage.Add(Error, 1)
