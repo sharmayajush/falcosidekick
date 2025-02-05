@@ -48,11 +48,14 @@ func main() {
 	// 	fmt.Println("error---")
 	// }
 
-	var t2 types.DiscordOutputConfig
-	t2.WebhookURL = "https://discord.com/api/webhooks/1319533054661885952/uvfjilJLeHTVfmdIkxKaF5SIGNJ3jhUUEHrDFwARtFNBhRHq8vtnZsA5hpcvoGjzdGtV"
-	t2.Icon = "https://help.accuknox.com/assets/images/logo.png"
+	// var t2 types.DiscordOutputConfig
+	// t2.WebhookURL = "https://discord.com/api/webhooks/1319533054661885952/uvfjilJLeHTVfmdIkxKaF5SIGNJ3jhUUEHrDFwARtFNBhRHq8vtnZsA5hpcvoGjzdGtV"
+	// t2.Icon = "https://help.accuknox.com/assets/images/logo.png"
+	var t3 types.TeamsOutputConfig
+	t3.WebhookURL = "https://accuknox981.webhook.office.com/webhookb2/94632bbb-7f4c-4e9b-8cde-1c2ee21e0219@36ddf603-4580-43e4-a49d-353a5de81b7a/IncomingWebhook/708b08a951554c37adf52381c6a0a637/9933e893-62ca-4808-a76e-f9b0780b0379/V2s-BDn6vppgH6DtiI528jZ9J09Q48KMgMS4A4oP103nc1"
+	t3.ActivityImage = "https://help.accuknox.com/assets/images/logo.png"
 	cf1 := types.Configuration{
-		Discord: t2,
+		Teams: t3,
 	}
 	stats := &types.Statistics{}
 	promStats := &types.PromStatistics{}
@@ -63,7 +66,7 @@ func main() {
 		PromStats:       promStats,
 	}
 	// c1, err := outputs.NewClient("Discord", cf1.Discord.WebhookURL, cf1.Discord.MutualTLS, cf1.Discord.CheckCert, *initClientArgs)
-	c1, err := outputs.NewClient("Discord", cf1.Discord.WebhookURL, cf1.Discord.MutualTLS, cf1.Discord.CheckCert, *initClientArgs)
+	c1, err := outputs.NewClient("Teams", cf1.Teams.WebhookURL, cf1.Teams.MutualTLS, cf1.Teams.CheckCert, *initClientArgs)
 	if err != nil {
 		fmt.Println("error---")
 		return
