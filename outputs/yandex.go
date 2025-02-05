@@ -79,7 +79,7 @@ func (c *Client) UploadYandexS3(payload types.Payload) {
 	})
 	if err != nil {
 		go c.CountMetric("outputs", 1, []string{"output:yandexs3", "status:error"})
-		c.PromStats.Outputs.With(map[string]string{"destination": "yandexs3", "status": Error}).Inc()
+		// c.PromStats.Outputs.With(map[string]string{"destination": "yandexs3", "status": Error}).Inc()
 		log.Printf("[ERROR] : %v S3 - %v\n", c.OutputType, err.Error())
 		return
 	}
@@ -87,7 +87,7 @@ func (c *Client) UploadYandexS3(payload types.Payload) {
 	log.Printf("[INFO]  : %v S3 - Upload payload OK\n", c.OutputType)
 
 	go c.CountMetric("outputs", 1, []string{"output:yandexs3", "status:ok"})
-	c.PromStats.Outputs.With(map[string]string{"destination": "yandexs3", "status": "ok"}).Inc()
+	// c.PromStats.Outputs.With(map[string]string{"destination": "yandexs3", "status": "ok"}).Inc()
 }
 
 // UploadYandexDataStreams uploads payload to Yandex Data Streams
@@ -104,13 +104,13 @@ func (c *Client) UploadYandexDataStreams(payload types.Payload) {
 	resp, err := svc.PutRecord(input)
 	if err != nil {
 		go c.CountMetric("outputs", 1, []string{"output:yandexdatastreams", "status:error"})
-		c.PromStats.Outputs.With(map[string]string{"destination": "yandexdatastreams", "status": Error}).Inc()
+		// c.PromStats.Outputs.With(map[string]string{"destination": "yandexdatastreams", "status": Error}).Inc()
 		log.Printf("[ERROR] : %v Data Streams - %v\n", c.OutputType, err.Error())
 		return
 	}
 
 	log.Printf("[INFO] : %v Data Streams - Put Record OK (%v)\n", c.OutputType, resp.SequenceNumber)
 	go c.CountMetric("outputs", 1, []string{"output:yandexdatastreams", "status:ok"})
-	c.Stats.YandexDataStreams.Add(OK, 1)
-	c.PromStats.Outputs.With(map[string]string{"destination": "yandexdatastreams", "status": "ok"}).Inc()
+	// c.Stats.YandexDataStreams.Add(OK, 1)
+	// c.PromStats.Outputs.With(map[string]string{"destination": "yandexdatastreams", "status": "ok"}).Inc()
 }

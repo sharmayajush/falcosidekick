@@ -200,8 +200,8 @@ func (c *Client) EnqueueSecurityLake(payload types.Payload) {
 	offset, err := c.Config.AWS.SecurityLake.Memlog.Write(c.Config.AWS.SecurityLake.Ctx, []byte(payload.String()))
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:awssecuritylake.", "status:error"})
-		c.Stats.AWSSecurityLake.Add(Error, 1)
-		c.PromStats.Outputs.With(map[string]string{"destination": "awssecuritylake.", "status": Error}).Inc()
+		// c.Stats.AWSSecurityLake.Add(Error, 1)
+		// c.PromStats.Outputs.With(map[string]string{"destination": "awssecuritylake.", "status": Error}).Inc()
 		log.Printf("[ERROR] : %v SecurityLake - %v\n", c.OutputType, err)
 		return
 	}
@@ -230,8 +230,8 @@ func (c *Client) processNextBatch() error {
 	if err != nil {
 		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 			go c.CountMetric(Outputs, 1, []string{"output:awssecuritylake.", "status:error"})
-			c.Stats.AWSSecurityLake.Add(Error, 1)
-			c.PromStats.Outputs.With(map[string]string{"destination": "awssecuritylake.", "status": Error}).Inc()
+			// c.Stats.AWSSecurityLake.Add(Error, 1)
+			// c.PromStats.Outputs.With(map[string]string{"destination": "awssecuritylake.", "status": Error}).Inc()
 			log.Printf("[ERROR] : %v SecurityLake - %v\n", c.OutputType, err)
 			// ctx currently not handled in main
 			// https://github.com/falcosecurity/falcosidekick/pull/390#discussion_r1081690326
@@ -242,8 +242,8 @@ func (c *Client) processNextBatch() error {
 			earliest, _ := ml.Range(ctx)
 
 			go c.CountMetric(Outputs, 1, []string{"output:awssecuritylake.", "status:error"})
-			c.Stats.AWSSecurityLake.Add(Error, 1)
-			c.PromStats.Outputs.With(map[string]string{"destination": "awssecuritylake.", "status": Error}).Inc()
+			// c.Stats.AWSSecurityLake.Add(Error, 1)
+			// c.PromStats.Outputs.With(map[string]string{"destination": "awssecuritylake.", "status": Error}).Inc()
 
 			earliest = earliest - 1 // to ensure next batch includes earliest as we read from ReadOffset+1
 			msg := fmt.Errorf("slow batch reader: resetting read offset from %d to %d: %v",
@@ -259,8 +259,8 @@ func (c *Client) processNextBatch() error {
 		// catch all other errors besides ErrFutureOffset which could contain a partial batch
 		if !errors.Is(err, memlog.ErrFutureOffset) {
 			go c.CountMetric(Outputs, 1, []string{"output:awssecuritylake.", "status:error"})
-			c.Stats.AWSSecurityLake.Add(Error, 1)
-			c.PromStats.Outputs.With(map[string]string{"destination": "awssecuritylake.", "status": Error}).Inc()
+			// c.Stats.AWSSecurityLake.Add(Error, 1)
+			// c.PromStats.Outputs.With(map[string]string{"destination": "awssecuritylake.", "status": Error}).Inc()
 			log.Printf("[ERROR] : %v SecurityLake - %v\n", c.OutputType, err)
 			return err
 		}
@@ -271,15 +271,15 @@ func (c *Client) processNextBatch() error {
 
 		if err := c.writeParquet(uid, batch[:count]); err != nil {
 			go c.CountMetric(Outputs, 1, []string{"output:awssecuritylake.", "status:error"})
-			c.Stats.AWSSecurityLake.Add(Error, 1)
-			c.PromStats.Outputs.With(map[string]string{"destination": "awssecuritylake.", "status": Error}).Inc()
+			// c.Stats.AWSSecurityLake.Add(Error, 1)
+			// c.PromStats.Outputs.With(map[string]string{"destination": "awssecuritylake.", "status": Error}).Inc()
 			// we don't update ReadOffset to retry and not skip records
 			return err
 		}
 
 		go c.CountMetric(Outputs, 1, []string{"output:awssecuritylake.", "status:ok"})
-		c.Stats.AWSSecurityLake.Add(OK, 1)
-		c.PromStats.Outputs.With(map[string]string{"destination": "awssecuritylake.", "status": "ok"}).Inc()
+		// c.Stats.AWSSecurityLake.Add(OK, 1)
+		// c.PromStats.Outputs.With(map[string]string{"destination": "awssecuritylake.", "status": "ok"}).Inc()
 
 		// update offset
 		*awslake.ReadOffset = batch[count-1].Metadata.Offset

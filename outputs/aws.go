@@ -131,13 +131,13 @@ func (c *Client) InvokeLambda(payload types.Payload) {
 		Payload:        f,
 	}
 
-	c.Stats.AWSLambda.Add("total", 1)
+	// c.Stats.AWSLambda.Add("total", 1)
 
 	resp, err := svc.Invoke(input)
 	if err != nil {
 		go c.CountMetric("outputs", 1, []string{"output:awslambda", "status:error"})
-		c.Stats.AWSLambda.Add(Error, 1)
-		c.PromStats.Outputs.With(map[string]string{"destination": "awslambda", "status": Error}).Inc()
+		// c.Stats.AWSLambda.Add(Error, 1)
+		// c.PromStats.Outputs.With(map[string]string{"destination": "awslambda", "status": Error}).Inc()
 		log.Printf("[ERROR] : %v Lambda - %v\n", c.OutputType, err.Error())
 		return
 	}
@@ -149,8 +149,8 @@ func (c *Client) InvokeLambda(payload types.Payload) {
 
 	log.Printf("[INFO]  : %v Lambda - Invoke OK (%v)\n", c.OutputType, *resp.StatusCode)
 	go c.CountMetric("outputs", 1, []string{"output:awslambda", "status:ok"})
-	c.Stats.AWSLambda.Add("ok", 1)
-	c.PromStats.Outputs.With(map[string]string{"destination": "awslambda", "status": "ok"}).Inc()
+	// c.Stats.AWSLambda.Add("ok", 1)
+	// c.PromStats.Outputs.With(map[string]string{"destination": "awslambda", "status": "ok"}).Inc()
 }
 
 // SendMessage sends a message to SQS Queue
@@ -164,13 +164,13 @@ func (c *Client) SendMessage(payload types.Payload) {
 		QueueUrl:    aws.String(c.Config.AWS.SQS.URL),
 	}
 
-	c.Stats.AWSSQS.Add("total", 1)
+	// c.Stats.AWSSQS.Add("total", 1)
 
 	resp, err := svc.SendMessage(input)
 	if err != nil {
 		go c.CountMetric("outputs", 1, []string{"output:awssqs", "status:error"})
-		c.Stats.AWSSQS.Add(Error, 1)
-		c.PromStats.Outputs.With(map[string]string{"destination": "awssqs", "status": Error}).Inc()
+		// c.Stats.AWSSQS.Add(Error, 1)
+		// c.PromStats.Outputs.With(map[string]string{"destination": "awssqs", "status": Error}).Inc()
 		log.Printf("[ERROR] : %v SQS - %v\n", c.OutputType, err.Error())
 		return
 	}
@@ -181,8 +181,8 @@ func (c *Client) SendMessage(payload types.Payload) {
 
 	log.Printf("[INFO]  : %v SQS - Send Message OK (%v)\n", c.OutputType, *resp.MessageId)
 	go c.CountMetric("outputs", 1, []string{"output:awssqs", "status:ok"})
-	c.Stats.AWSSQS.Add(OK, 1)
-	c.PromStats.Outputs.With(map[string]string{"destination": "awssqs", "status": "ok"}).Inc()
+	// c.Stats.AWSSQS.Add(OK, 1)
+	// c.PromStats.Outputs.With(map[string]string{"destination": "awssqs", "status": "ok"}).Inc()
 }
 
 // UploadS3 upload payload to S3
@@ -204,7 +204,7 @@ func (c *Client) UploadS3(payload types.Payload) {
 	})
 	if err != nil {
 		go c.CountMetric("outputs", 1, []string{"output:awss3", "status:error"})
-		c.PromStats.Outputs.With(map[string]string{"destination": "awss3", "status": Error}).Inc()
+		// c.PromStats.Outputs.With(map[string]string{"destination": "awss3", "status": Error}).Inc()
 		log.Printf("[ERROR] : %v S3 - %v\n", c.OutputType, err.Error())
 		return
 	}
@@ -216,7 +216,7 @@ func (c *Client) UploadS3(payload types.Payload) {
 	}
 
 	go c.CountMetric("outputs", 1, []string{"output:awss3", "status:ok"})
-	c.PromStats.Outputs.With(map[string]string{"destination": "awss3", "status": "ok"}).Inc()
+	// c.PromStats.Outputs.With(map[string]string{"destination": "awss3", "status": "ok"}).Inc()
 }
 
 // PublishTopic sends a message to a SNS Topic
@@ -256,20 +256,20 @@ func (c *Client) PublishTopic(payload types.Payload) {
 		log.Printf("[DEBUG] : %v SNS - Message : %v\n", c.OutputType, string(p))
 	}
 
-	c.Stats.AWSSNS.Add("total", 1)
+	// c.Stats.AWSSNS.Add("total", 1)
 	resp, err := svc.Publish(msg)
 	if err != nil {
 		go c.CountMetric("outputs", 1, []string{"output:awssns", "status:error"})
-		c.Stats.AWSSNS.Add(Error, 1)
-		c.PromStats.Outputs.With(map[string]string{"destination": "awssns", "status": Error}).Inc()
+		// c.Stats.AWSSNS.Add(Error, 1)
+		// c.PromStats.Outputs.With(map[string]string{"destination": "awssns", "status": Error}).Inc()
 		log.Printf("[ERROR] : %v SNS - %v\n", c.OutputType, err.Error())
 		return
 	}
 
 	log.Printf("[INFO]  : %v SNS - Send to topic OK (%v)\n", c.OutputType, *resp.MessageId)
 	go c.CountMetric("outputs", 1, []string{"output:awssns", "status:ok"})
-	c.Stats.AWSSNS.Add(OK, 1)
-	c.PromStats.Outputs.With(map[string]string{"destination": "awssns", "status": OK}).Inc()
+	// c.Stats.AWSSNS.Add(OK, 1)
+	// c.PromStats.Outputs.With(map[string]string{"destination": "awssns", "status": OK}).Inc()
 }
 
 // SendCloudWatchLog sends a message to CloudWatch Log
@@ -278,7 +278,7 @@ func (c *Client) SendCloudWatchLog(payload types.Payload) {
 
 	f, _ := json.Marshal(payload)
 
-	c.Stats.AWSCloudWatchLogs.Add(Total, 1)
+	// c.Stats.AWSCloudWatchLogs.Add(Total, 1)
 
 	if c.Config.AWS.CloudWatchLogs.LogStream == "" {
 		streamName := "sidekick-logstream"
@@ -294,8 +294,8 @@ func (c *Client) SendCloudWatchLog(payload types.Payload) {
 				log.Printf("[INFO]  : %v CloudWatchLogs - Log Stream %s already exist, reusing...\n", c.OutputType, streamName)
 			} else {
 				go c.CountMetric("outputs", 1, []string{"output:awscloudwatchlogs", "status:error"})
-				c.Stats.AWSCloudWatchLogs.Add(Error, 1)
-				c.PromStats.Outputs.With(map[string]string{"destination": "awscloudwatchlogs", "status": Error}).Inc()
+				// c.Stats.AWSCloudWatchLogs.Add(Error, 1)
+				// c.PromStats.Outputs.With(map[string]string{"destination": "awscloudwatchlogs", "status": Error}).Inc()
 				log.Printf("[ERROR] : %v CloudWatchLogs - %v\n", c.OutputType, err.Error())
 				return
 			}
@@ -319,16 +319,16 @@ func (c *Client) SendCloudWatchLog(payload types.Payload) {
 	resp, err := c.putLogEvents(svc, input)
 	if err != nil {
 		go c.CountMetric("outputs", 1, []string{"output:awscloudwatchlogs", "status:error"})
-		c.Stats.AWSCloudWatchLogs.Add(Error, 1)
-		c.PromStats.Outputs.With(map[string]string{"destination": "awscloudwatchlogs", "status": Error}).Inc()
+		// c.Stats.AWSCloudWatchLogs.Add(Error, 1)
+		// c.PromStats.Outputs.With(map[string]string{"destination": "awscloudwatchlogs", "status": Error}).Inc()
 		log.Printf("[ERROR] : %v CloudWatchLogs - %v\n", c.OutputType, err.Error())
 		return
 	}
 
 	log.Printf("[INFO]  : %v CloudWatchLogs - Send Log OK (%v)\n", c.OutputType, resp.String())
 	go c.CountMetric("outputs", 1, []string{"output:awscloudwatchlogs", "status:ok"})
-	c.Stats.AWSCloudWatchLogs.Add(OK, 1)
-	c.PromStats.Outputs.With(map[string]string{"destination": "awscloudwatchlogs", "status": OK}).Inc()
+	// c.Stats.AWSCloudWatchLogs.Add(OK, 1)
+	// c.PromStats.Outputs.With(map[string]string{"destination": "awscloudwatchlogs", "status": OK}).Inc()
 }
 
 // PutLogEvents will attempt to execute and handle invalid tokens.
@@ -352,7 +352,7 @@ func (c *Client) putLogEvents(svc *cloudwatchlogs.CloudWatchLogs, input *cloudwa
 func (c *Client) PutRecord(payload types.Payload) {
 	svc := kinesis.New(c.AWSSession)
 
-	c.Stats.AWSKinesis.Add(Total, 1)
+	// c.Stats.AWSKinesis.Add(Total, 1)
 
 	f, _ := json.Marshal(payload)
 	input := &kinesis.PutRecordInput{
@@ -364,16 +364,16 @@ func (c *Client) PutRecord(payload types.Payload) {
 	resp, err := svc.PutRecord(input)
 	if err != nil {
 		go c.CountMetric("outputs", 1, []string{"output:awskinesis", "status:error"})
-		c.Stats.AWSKinesis.Add(Error, 1)
-		c.PromStats.Outputs.With(map[string]string{"destination": "awskinesis", "status": Error}).Inc()
+		// c.Stats.AWSKinesis.Add(Error, 1)
+		// c.PromStats.Outputs.With(map[string]string{"destination": "awskinesis", "status": Error}).Inc()
 		log.Printf("[ERROR] : %v Kinesis - %v\n", c.OutputType, err.Error())
 		return
 	}
 
 	log.Printf("[INFO] : %v Kinesis - Put Record OK (%v)\n", c.OutputType, resp.SequenceNumber)
 	go c.CountMetric("outputs", 1, []string{"output:awskinesis", "status:ok"})
-	c.Stats.AWSKinesis.Add(OK, 1)
-	c.PromStats.Outputs.With(map[string]string{"destination": "awskinesis", "status": "ok"}).Inc()
+	// c.Stats.AWSKinesis.Add(OK, 1)
+	// c.PromStats.Outputs.With(map[string]string{"destination": "awskinesis", "status": "ok"}).Inc()
 }
 
 // lambda

@@ -67,7 +67,7 @@ func newTeamsPayload(payload types.Payload, config *types.Configuration) teamsPa
 		fact.Value = payload.TriggerName
 		facts = append(facts, fact)
 		fact.Name = Source
-		fact.Value = payload.OutputFields["PodName"].(string)
+		fact.Value = "alert"
 		facts = append(facts, fact)
 		if payload.Hostname != "" {
 			fact.Name = Hostname
@@ -90,6 +90,7 @@ func newTeamsPayload(payload types.Payload, config *types.Configuration) teamsPa
 
 	t := teamsPayload{
 		Type:       "MessageCard",
+		Summary:    "This is an alert by accuknox",
 		ThemeColor: color,
 		Sections:   sections,
 	}
@@ -99,21 +100,21 @@ func newTeamsPayload(payload types.Payload, config *types.Configuration) teamsPa
 
 // TeamsPost posts event to Teams
 func (c *Client) TeamsPost(payload types.Payload) {
-	c.Stats.Teams.Add(Total, 1)
+	// c.Stats.Teams.Add(Total, 1)
 
 	err := c.Post(newTeamsPayload(payload, c.Config))
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:teams", "status:error"})
-		c.Stats.Teams.Add(Error, 1)
-		c.PromStats.Outputs.With(map[string]string{"destination": "teams", "status": Error}).Inc()
+		// c.Stats.Teams.Add(Error, 1)
+		// c.PromStats.Outputs.With(map[string]string{"destination": "teams", "status": Error}).Inc()
 		log.Printf("[ERROR] : Teams - %v\n", err)
 		return
 	}
 
 	// Setting the success status
 	go c.CountMetric(Outputs, 1, []string{"output:teams", "status:ok"})
-	c.Stats.Teams.Add(OK, 1)
-	c.PromStats.Outputs.With(map[string]string{"destination": "teams", "status": OK}).Inc()
+	// c.Stats.Teams.Add(OK, 1)
+	// c.PromStats.Outputs.With(map[string]string{"destination": "teams", "status": OK}).Inc()
 }
 
 func (c *Client) WatchTeamsPostAlerts() error {

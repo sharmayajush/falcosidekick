@@ -89,18 +89,18 @@ func newGooglechatPayload(payload types.Payload, config *types.Configuration) go
 
 // GooglechatPost posts event to Google Chat
 func (c *Client) GooglechatPost(payload types.Payload) {
-	c.Stats.GoogleChat.Add(Total, 1)
+	// c.Stats.GoogleChat.Add(Total, 1)
 
 	err := c.Post(newGooglechatPayload(payload, c.Config))
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:googlechat", "status:error"})
-		c.Stats.GoogleChat.Add(Error, 1)
-		c.PromStats.Outputs.With(map[string]string{"destination": "googlechat", "status": Error}).Inc()
+		// c.Stats.GoogleChat.Add(Error, 1)
+		// c.PromStats.Outputs.With(map[string]string{"destination": "googlechat", "status": Error}).Inc()
 		log.Printf("[ERROR] : GoogleChat - %v\n", err)
 		return
 	}
 
 	go c.CountMetric(Outputs, 1, []string{"output:googlechat", "status:ok"})
-	c.Stats.GoogleChat.Add(OK, 1)
-	c.PromStats.Outputs.With(map[string]string{"destination": "googlechat", "status": OK}).Inc()
+	// c.Stats.GoogleChat.Add(OK, 1)
+	// c.PromStats.Outputs.With(map[string]string{"destination": "googlechat", "status": OK}).Inc()
 }

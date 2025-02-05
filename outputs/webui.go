@@ -22,19 +22,19 @@ func newWebUIPayload(payload types.Payload, config *types.Configuration) WebUIPa
 
 // WebUIPost posts event to Slack
 func (c *Client) WebUIPost(payload types.Payload) {
-	c.Stats.WebUI.Add(Total, 1)
+	// c.Stats.WebUI.Add(Total, 1)
 
 	err := c.Post(newWebUIPayload(payload, c.Config))
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:webui", "status:error"})
-		c.Stats.WebUI.Add(Error, 1)
-		c.PromStats.Outputs.With(map[string]string{"destination": "webui", "status": Error}).Inc()
+		// c.Stats.WebUI.Add(Error, 1)
+		// c.PromStats.Outputs.With(map[string]string{"destination": "webui", "status": Error}).Inc()
 		log.Printf("[ERROR] : WebUI - %v\n", err.Error())
 		return
 	}
 
 	// Setting the success status
 	go c.CountMetric(Outputs, 1, []string{"output:webui", "status:ok"})
-	c.Stats.WebUI.Add(OK, 1)
-	c.PromStats.Outputs.With(map[string]string{"destination": "webui", "status": OK}).Inc()
+	// c.Stats.WebUI.Add(OK, 1)
+	// c.PromStats.Outputs.With(map[string]string{"destination": "webui", "status": OK}).Inc()
 }

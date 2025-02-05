@@ -73,7 +73,7 @@ func newAlertmanagerPayload(Payload types.Payload, config *types.Configuration) 
 
 // AlertmanagerPost posts event to AlertManager
 func (c *Client) AlertmanagerPost(Payload types.Payload) {
-	c.Stats.Alertmanager.Add(Total, 1)
+	// c.Stats.Alertmanager.Add(Total, 1)
 	c.httpClientLock.Lock()
 	defer c.httpClientLock.Unlock()
 	for i, j := range c.Config.Alertmanager.CustomHeaders {
@@ -83,15 +83,15 @@ func (c *Client) AlertmanagerPost(Payload types.Payload) {
 	err := c.Post(newAlertmanagerPayload(Payload, c.Config))
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:alertmanager", "status:error"})
-		c.Stats.Alertmanager.Add(Error, 1)
-		c.PromStats.Outputs.With(map[string]string{"destination": "alertmanager", "status": Error}).Inc()
+		// c.Stats.Alertmanager.Add(Error, 1)
+		// c.PromStats.Outputs.With(map[string]string{"destination": "alertmanager", "status": Error}).Inc()
 		log.Printf("[ERROR] : AlertManager - %v\n", err)
 		return
 	}
 
 	go c.CountMetric(Outputs, 1, []string{"output:alertmanager", "status:ok"})
-	c.Stats.Alertmanager.Add(OK, 1)
-	c.PromStats.Outputs.With(map[string]string{"destination": "alertmanager", "status": OK}).Inc()
+	// c.Stats.Alertmanager.Add(OK, 1)
+	// c.PromStats.Outputs.With(map[string]string{"destination": "alertmanager", "status": OK}).Inc()
 }
 
 func alertmanagerSafeLabel(label string) string {

@@ -60,8 +60,8 @@ func (c *Client) SyslogPost(payload types.Payload) {
 	sysLog, err := syslog.Dial(c.Config.Syslog.Protocol, endpoint, priority, Accuknox)
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:syslog", "status:error"})
-		c.Stats.Syslog.Add(Error, 1)
-		c.PromStats.Outputs.With(map[string]string{"destination": "syslog", "status": Error}).Inc()
+		// c.Stats.Syslog.Add(Error, 1)
+		// c.PromStats.Outputs.With(map[string]string{"destination": "syslog", "status": Error}).Inc()
 		log.Printf("[ERROR] : Syslog - %v\n", err)
 		return
 	}
@@ -106,8 +106,8 @@ func (c *Client) SyslogPost(payload types.Payload) {
 	}
 
 	go c.CountMetric(Outputs, 1, []string{"output:syslog", "status:ok"})
-	c.Stats.Syslog.Add(OK, 1)
-	c.PromStats.Outputs.With(map[string]string{"destination": "syslog", "status": OK}).Inc()
+	// c.Stats.Syslog.Add(OK, 1)
+	// c.PromStats.Outputs.With(map[string]string{"destination": "syslog", "status": OK}).Inc()
 }
 
 func (c *Client) WatchSyslogsAlerts() error {

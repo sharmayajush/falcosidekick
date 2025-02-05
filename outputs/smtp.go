@@ -100,7 +100,7 @@ func newSMTPPayload(Payload types.Payload, config *types.Configuration) SMTPPayl
 
 func (c *Client) ReportErr(message string, err error) {
 	go c.CountMetric("outputs", 1, []string{"output:smtp", "status:error"})
-	c.Stats.SMTP.Add(Error, 1)
+	// c.Stats.SMTP.Add(Error, 1)
 	log.Printf("[ERROR] : SMTP - %s : %v\n", message, err)
 }
 
@@ -171,7 +171,7 @@ func (c *Client) SendMail(Payload types.Payload) {
 		}
 	}
 
-	c.Stats.SMTP.Add("total", 1)
+	// c.Stats.SMTP.Add("total", 1)
 	err = smtpClient.SendMail(c.Config.SMTP.From, to, strings.NewReader(body))
 	if err != nil {
 		c.ReportErr("Send Mail failure", err)
@@ -180,7 +180,7 @@ func (c *Client) SendMail(Payload types.Payload) {
 
 	log.Printf("[INFO]  : SMTP - Sent OK\n")
 	go c.CountMetric("outputs", 1, []string{"output:smtp", "status:ok"})
-	c.Stats.SMTP.Add(OK, 1)
+	// c.Stats.SMTP.Add(OK, 1)
 }
 
 func (c *Client) WatchSmtpAlerts() error {

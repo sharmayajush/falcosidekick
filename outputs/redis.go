@@ -17,8 +17,8 @@ import (
 
 func (c *Client) ReportError(err error) {
 	go c.CountMetric(Outputs, 1, []string{"output:redis", "status:error"})
-	c.Stats.Redis.Add(Error, 1)
-	c.PromStats.Outputs.With(map[string]string{"destination": "redis", "status": Error}).Inc()
+	// c.Stats.Redis.Add(Error, 1)
+	// c.PromStats.Outputs.With(map[string]string{"destination": "redis", "status": Error}).Inc()
 	log.Printf("[ERROR] : Redis - %v\n", err)
 	return
 }
@@ -66,8 +66,8 @@ func (c *Client) RedisPost(payload types.Payload) {
 
 	// Setting the success status
 	go c.CountMetric(Outputs, 1, []string{"output:redis", "status:ok"})
-	c.Stats.Redis.Add(OK, 1)
-	c.PromStats.Outputs.With(map[string]string{"destination": "redis", "status": OK}).Inc()
+	// c.Stats.Redis.Add(OK, 1)
+	// c.PromStats.Outputs.With(map[string]string{"destination": "redis", "status": OK}).Inc()
 }
 
 func (c *Client) WatchRedisPostAlerts() error {

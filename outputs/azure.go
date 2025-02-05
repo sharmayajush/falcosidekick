@@ -30,7 +30,7 @@ func NewEventHubClient(config *types.Configuration, stats *types.Statistics, pro
 
 // EventHubPost posts event to Azure Event Hub
 func (c *Client) EventHubPost(Payload types.Payload) {
-	c.Stats.AzureEventHub.Add(Total, 1)
+	// c.Stats.AzureEventHub.Add(Total, 1)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
@@ -82,16 +82,16 @@ func (c *Client) EventHubPost(Payload types.Payload) {
 
 	// Setting the success status
 	go c.CountMetric(Outputs, 1, []string{"output:azureeventhub", "status:ok"})
-	c.Stats.AzureEventHub.Add(OK, 1)
-	c.PromStats.Outputs.With(map[string]string{"destination": "azureeventhub", "status": OK}).Inc()
+	// c.Stats.AzureEventHub.Add(OK, 1)
+	// c.PromStats.Outputs.With(map[string]string{"destination": "azureeventhub", "status": OK}).Inc()
 	log.Printf("[INFO]  : %v EventHub - Publish OK", c.OutputType)
 }
 
 // setEventHubErrorMetrics set the error stats
 func (c *Client) setEventHubErrorMetrics() {
 	go c.CountMetric(Outputs, 1, []string{"output:azureeventhub", "status:error"})
-	c.Stats.AzureEventHub.Add(Error, 1)
-	c.PromStats.Outputs.With(map[string]string{"destination": "azureeventhub", "status": Error}).Inc()
+	// c.Stats.AzureEventHub.Add(Error, 1)
+	// c.PromStats.Outputs.With(map[string]string{"destination": "azureeventhub", "status": Error}).Inc()
 }
 
 // EnqueueSecurityLake

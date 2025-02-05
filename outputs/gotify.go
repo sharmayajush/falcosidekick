@@ -91,7 +91,7 @@ func newGotifyPayload(payload types.Payload, config *types.Configuration) gotify
 
 // GotifyPost posts event to Gotify
 func (c *Client) GotifyPost(payload types.Payload) {
-	c.Stats.Gotify.Add(Total, 1)
+	// c.Stats.Gotify.Add(Total, 1)
 
 	if c.Config.Gotify.Token != "" {
 		c.httpClientLock.Lock()
@@ -108,13 +108,13 @@ func (c *Client) GotifyPost(payload types.Payload) {
 
 	// Setting the success status
 	go c.CountMetric(Outputs, 1, []string{"output:gotify", "status:ok"})
-	c.Stats.Gotify.Add(OK, 1)
-	c.PromStats.Outputs.With(map[string]string{"destination": "gotify", "status": OK}).Inc()
+	// c.Stats.Gotify.Add(OK, 1)
+	// c.PromStats.Outputs.With(map[string]string{"destination": "gotify", "status": OK}).Inc()
 }
 
 // setGotifyErrorMetrics set the error stats
 func (c *Client) setGotifyErrorMetrics() {
 	go c.CountMetric(Outputs, 1, []string{"output:gotify", "status:error"})
-	c.Stats.Gotify.Add(Error, 1)
-	c.PromStats.Outputs.With(map[string]string{"destination": "gotify", "status": Error}).Inc()
+	// c.Stats.Gotify.Add(Error, 1)
+	// c.PromStats.Outputs.With(map[string]string{"destination": "gotify", "status": Error}).Inc()
 }

@@ -59,52 +59,52 @@ type Configuration struct {
 	OutputFieldFormat  string
 	Customfields       map[string]string
 	Templatedfields    map[string]string
-	Prometheus         prometheusOutputConfig
+	Prometheus         PrometheusOutputConfig
 	Slack              SlackOutputConfig
 	Email              EmailOutputConfig
 	Cliq               CliqOutputConfig
 	Mattermost         MattermostOutputConfig
 	Rocketchat         RocketchatOutputConfig
-	Teams              teamsOutputConfig
-	Datadog            datadogOutputConfig
+	Teams              TeamsOutputConfig
+	Datadog            DatadogOutputConfig
 	Discord            DiscordOutputConfig
 	Alertmanager       AlertmanagerOutputConfig
 	Elasticsearch      ElasticsearchOutputConfig
 	Quickwit           QuickwitOutputConfig
-	Influxdb           influxdbOutputConfig
+	Influxdb           InfluxdbOutputConfig
 	Loki               LokiOutputConfig
 	SumoLogic          SumoLogicOutputConfig
-	Nats               natsOutputConfig
-	Stan               stanOutputConfig
-	AWS                awsOutputConfig
-	SMTP               smtpOutputConfig
-	Opsgenie           opsgenieOutputConfig
-	Statsd             statsdOutputConfig
-	Dogstatsd          statsdOutputConfig
+	Nats               NatsOutputConfig
+	Stan               StanOutputConfig
+	AWS                AwsOutputConfig
+	SMTP               SmtpOutputConfig
+	Opsgenie           OpsgenieOutputConfig
+	Statsd             StatsdOutputConfig
+	Dogstatsd          StatsdOutputConfig
 	Webhook            WebhookOutputConfig
 	CloudEvents        CloudEventsOutputConfig
-	Azure              azureConfig
+	Azure              AzureConfig
 	GCP                GcpOutputConfig
 	Googlechat         GooglechatConfig
-	Kafka              kafkaConfig
+	Kafka              KafkaConfig
 	KafkaRest          KafkaRestConfig
 	Pagerduty          PagerdutyConfig
-	Kubeless           kubelessConfig
-	Openfaas           openfaasConfig
-	Tekton             tektonConfig
+	Kubeless           KubelessConfig
+	Openfaas           OpenfaasConfig
+	Tekton             TektonConfig
 	WebUI              WebUIOutputConfig
 	PolicyReport       PolicyReportConfig
 	Rabbitmq           RabbitmqConfig
 	Wavefront          WavefrontOutputConfig
-	Fission            fissionConfig
+	Fission            FissionConfig
 	Grafana            GrafanaOutputConfig
 	GrafanaOnCall      GrafanaOnCallOutputConfig
 	Yandex             YandexOutputConfig
 	Syslog             SyslogConfig
 	NodeRed            NodeRedOutputConfig
 	MQTT               MQTTConfig
-	Zincsearch         zincsearchOutputConfig
-	Gotify             gotifyOutputConfig
+	Zincsearch         ZincsearchOutputConfig
+	Gotify             GotifyOutputConfig
 	Spyderbat          SpyderbatConfig
 	TimescaleDB        TimescaleDBConfig
 	Redis              RedisConfig
@@ -227,7 +227,7 @@ type WavefrontOutputConfig struct {
 	MinimumPriority      string
 }
 
-type teamsOutputConfig struct {
+type TeamsOutputConfig struct {
 	WebhookURL      string
 	ActivityImage   string
 	OutputFormat    string
@@ -236,7 +236,7 @@ type teamsOutputConfig struct {
 	MutualTLS       bool
 }
 
-type datadogOutputConfig struct {
+type DatadogOutputConfig struct {
 	APIKey          string
 	Host            string
 	MinimumPriority string
@@ -303,7 +303,7 @@ type QuickwitOutputConfig struct {
 	AutoCreateIndex bool
 }
 
-type influxdbOutputConfig struct {
+type InfluxdbOutputConfig struct {
 	HostPort        string
 	Database        string
 	Organization    string
@@ -341,19 +341,19 @@ type SumoLogicOutputConfig struct {
 	MutualTLS       bool
 }
 
-type prometheusOutputConfig struct {
+type PrometheusOutputConfig struct {
 	ExtraLabels     string
 	ExtraLabelsList []string
 }
 
-type natsOutputConfig struct {
+type NatsOutputConfig struct {
 	HostPort        string
 	MinimumPriority string
 	CheckCert       bool
 	MutualTLS       bool
 }
 
-type stanOutputConfig struct {
+type StanOutputConfig struct {
 	HostPort        string
 	ClusterID       string
 	ClientID        string
@@ -362,47 +362,47 @@ type stanOutputConfig struct {
 	MutualTLS       bool
 }
 
-type awsOutputConfig struct {
+type AwsOutputConfig struct {
 	Region          string
 	AccessKeyID     string
 	SecretAccessKey string
 	RoleARN         string
 	ExternalID      string
 	CheckIdentity   bool
-	Lambda          awsLambdaConfig
-	SQS             awsSQSConfig
-	SNS             awsSNSConfig
-	S3              awsS3Config
-	SecurityLake    awsSecurityLakeConfig
-	CloudWatchLogs  awsCloudWatchLogs
-	Kinesis         awsKinesisConfig
+	Lambda          AwsLambdaConfig
+	SQS             AwsSQSConfig
+	SNS             AwsSNSConfig
+	S3              AwsS3Config
+	SecurityLake    AwsSecurityLakeConfig
+	CloudWatchLogs  AwsCloudWatchLogs
+	Kinesis         AwsKinesisConfig
 }
 
-type awsLambdaConfig struct {
+type AwsLambdaConfig struct {
 	FunctionName    string
 	InvocationType  string
 	LogType         string
 	MinimumPriority string
 }
 
-type awsSQSConfig struct {
+type AwsSQSConfig struct {
 	URL             string
 	MinimumPriority string
 }
 
-type awsSNSConfig struct {
+type AwsSNSConfig struct {
 	TopicArn        string
 	RawJSON         bool
 	MinimumPriority string
 }
 
-type awsCloudWatchLogs struct {
+type AwsCloudWatchLogs struct {
 	LogGroup        string
 	LogStream       string
 	MinimumPriority string
 }
 
-type awsS3Config struct {
+type AwsS3Config struct {
 	Prefix          string
 	Bucket          string
 	MinimumPriority string
@@ -410,12 +410,12 @@ type awsS3Config struct {
 	ObjectCannedACL string
 }
 
-type awsKinesisConfig struct {
+type AwsKinesisConfig struct {
 	StreamName      string
 	MinimumPriority string
 }
 
-type awsSecurityLakeConfig struct {
+type AwsSecurityLakeConfig struct {
 	Bucket          string
 	Region          string
 	Prefix          string
@@ -429,7 +429,7 @@ type awsSecurityLakeConfig struct {
 	WriteOffset     *memlog.Offset
 }
 
-type smtpOutputConfig struct {
+type SmtpOutputConfig struct {
 	HostPort        string
 	TLS             bool
 	AuthMechanism   string
@@ -444,7 +444,7 @@ type smtpOutputConfig struct {
 	MinimumPriority string
 }
 
-type opsgenieOutputConfig struct {
+type OpsgenieOutputConfig struct {
 	Region          string
 	APIKey          string
 	MinimumPriority string
@@ -481,23 +481,23 @@ type CloudEventsOutputConfig struct {
 	MutualTLS       bool
 }
 
-type statsdOutputConfig struct {
+type StatsdOutputConfig struct {
 	Forwarder string
 	Namespace string
 	Tags      []string
 }
 
-type azureConfig struct {
-	EventHub eventHub
+type AzureConfig struct {
+	EventHub EventHub
 }
 
-type eventHub struct {
+type EventHub struct {
 	Namespace       string
 	Name            string
 	MinimumPriority string
 }
 
-type gcpCloudRun struct {
+type GcpCloudRun struct {
 	Endpoint        string
 	JWT             string
 	MinimumPriority string
@@ -507,12 +507,12 @@ type GcpOutputConfig struct {
 	Credentials      string
 	WorkloadIdentity bool
 	PubSub           GcpPubSub
-	Storage          gcpStorage
-	CloudFunctions   gcpCloudFunctions
-	CloudRun         gcpCloudRun
+	Storage          GcpStorage
+	CloudFunctions   GcpCloudFunctions
+	CloudRun         GcpCloudRun
 }
 
-type gcpCloudFunctions struct {
+type GcpCloudFunctions struct {
 	Name            string
 	MinimumPriority string
 }
@@ -524,7 +524,7 @@ type GcpPubSub struct {
 	CustomAttributes map[string]string
 }
 
-type gcpStorage struct {
+type GcpStorage struct {
 	Bucket          string
 	Prefix          string
 	MinimumPriority string
@@ -541,7 +541,7 @@ type GooglechatConfig struct {
 	MutualTLS             bool
 }
 
-type kafkaConfig struct {
+type KafkaConfig struct {
 	HostPort        string
 	Topic           string
 	MinimumPriority string
@@ -573,7 +573,7 @@ type PagerdutyConfig struct {
 	MutualTLS       bool
 }
 
-type kubelessConfig struct {
+type KubelessConfig struct {
 	Namespace       string
 	Function        string
 	Port            int
@@ -583,7 +583,7 @@ type kubelessConfig struct {
 	MutualTLS       bool
 }
 
-type openfaasConfig struct {
+type OpenfaasConfig struct {
 	GatewayNamespace  string
 	GatewayService    string
 	FunctionName      string
@@ -595,7 +595,7 @@ type openfaasConfig struct {
 	MutualTLS         bool
 }
 
-type tektonConfig struct {
+type TektonConfig struct {
 	EventListener   string
 	MinimumPriority string
 	CheckCert       bool
@@ -692,7 +692,7 @@ type MQTTConfig struct {
 }
 
 // fissionConfig represents config parameters for Fission
-type fissionConfig struct {
+type FissionConfig struct {
 	RouterNamespace string
 	RouterService   string
 	RouterPort      int
@@ -704,7 +704,7 @@ type fissionConfig struct {
 }
 
 // zincsearchOutputConfig represents config parameters for Zincsearch
-type zincsearchOutputConfig struct {
+type ZincsearchOutputConfig struct {
 	HostPort        string
 	Index           string
 	Username        string
@@ -714,7 +714,7 @@ type zincsearchOutputConfig struct {
 }
 
 // gotifyOutputConfig represents config parameters for Gotify
-type gotifyOutputConfig struct {
+type GotifyOutputConfig struct {
 	HostPort        string
 	Token           string
 	Format          string

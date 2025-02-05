@@ -44,7 +44,7 @@ func NewRabbitmqClient(config *types.Configuration, stats *types.Statistics, pro
 
 // Publish sends a message to a Rabbitmq
 func (c *Client) Publish(Payload types.Payload) {
-	c.Stats.Rabbitmq.Add(Total, 1)
+	// c.Stats.Rabbitmq.Add(Total, 1)
 
 	payload, _ := json.Marshal(Payload)
 
@@ -55,17 +55,17 @@ func (c *Client) Publish(Payload types.Payload) {
 
 	if err != nil {
 		log.Printf("[ERROR] : RabbitMQ - %v - %v\n", "Error while publishing message", err.Error())
-		c.Stats.Rabbitmq.Add(Error, 1)
+		// c.Stats.Rabbitmq.Add(Error, 1)
 		go c.CountMetric("outputs", 1, []string{"output:rabbitmq", "status:error"})
-		c.PromStats.Outputs.With(map[string]string{"destination": "rabbitmq", "status": Error}).Inc()
+		// c.PromStats.Outputs.With(map[string]string{"destination": "rabbitmq", "status": Error}).Inc()
 
 		return
 	}
 
 	log.Printf("[INFO]  : RabbitMQ - Send to message OK \n")
-	c.Stats.Rabbitmq.Add(OK, 1)
+	// c.Stats.Rabbitmq.Add(OK, 1)
 	go c.CountMetric("outputs", 1, []string{"output:rabbitmq", "status:ok"})
-	c.PromStats.Outputs.With(map[string]string{"destination": "rabbitmq", "status": OK}).Inc()
+	// c.PromStats.Outputs.With(map[string]string{"destination": "rabbitmq", "status": OK}).Inc()
 }
 
 func (c *Client) WatchRabbitmqPublishAlerts() error {

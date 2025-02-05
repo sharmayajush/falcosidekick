@@ -64,7 +64,7 @@ func NewFissionClient(config *types.Configuration, stats *types.Statistics, prom
 
 // FissionCall .
 func (c *Client) FissionCall(payload types.Payload) {
-	c.Stats.Fission.Add(Total, 1)
+	// c.Stats.Fission.Add(Total, 1)
 
 	if c.Config.Fission.KubeConfig != "" {
 		str, _ := json.Marshal(payload)
@@ -80,8 +80,8 @@ func (c *Client) FissionCall(payload types.Payload) {
 		rawbody, err := res.Raw()
 		if err != nil {
 			go c.CountMetric(Outputs, 1, []string{"output:Fission", "status:error"})
-			c.Stats.Fission.Add(Error, 1)
-			c.PromStats.Outputs.With(map[string]string{"destination": "Fission", "status": Error}).Inc()
+			// c.Stats.Fission.Add(Error, 1)
+			// c.PromStats.Outputs.With(map[string]string{"destination": "Fission", "status": Error}).Inc()
 			log.Printf("[ERROR] : %s - %v\n", Fission, err.Error())
 			return
 		}
@@ -95,14 +95,14 @@ func (c *Client) FissionCall(payload types.Payload) {
 		err := c.Post(payload)
 		if err != nil {
 			go c.CountMetric(Outputs, 1, []string{"output:Fission", "status:error"})
-			c.Stats.Fission.Add(Error, 1)
-			c.PromStats.Outputs.With(map[string]string{"destination": "Fission", "status": Error}).Inc()
+			// c.Stats.Fission.Add(Error, 1)
+			// c.PromStats.Outputs.With(map[string]string{"destination": "Fission", "status": Error}).Inc()
 			log.Printf("[ERROR] : %s - %v\n", Fission, err.Error())
 			return
 		}
 	}
 	log.Printf("[INFO]  : %s - Call Function \"%v\" OK\n", Fission, c.Config.Fission.Function)
 	go c.CountMetric(Outputs, 1, []string{"output:Fission", "status:ok"})
-	c.Stats.Fission.Add(OK, 1)
-	c.PromStats.Outputs.With(map[string]string{"destination": "Fission", "status": OK}).Inc()
+	// c.Stats.Fission.Add(OK, 1)
+	// c.PromStats.Outputs.With(map[string]string{"destination": "Fission", "status": OK}).Inc()
 }
