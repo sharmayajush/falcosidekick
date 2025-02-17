@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"regexp"
 	"strings"
@@ -225,25 +224,25 @@ func init() {
 		}
 	}
 
-	if config.Elasticsearch.HostPort != "" {
-		var err error
-		endpointUrl := fmt.Sprintf("%s/%s/%s", config.Elasticsearch.HostPort, config.Elasticsearch.Index, config.Elasticsearch.Type)
-		elasticsearchClient, err = outputs.NewClient("Elasticsearch", endpointUrl, config.Elasticsearch.MutualTLS, config.Elasticsearch.CheckCert, *initClientArgs)
-		if err != nil {
-			config.Elasticsearch.HostPort = ""
-		} else {
-			if config.Elasticsearch.CreateIndexTemplate {
-				elasticsearchClient.EndpointURL, _ = url.Parse(fmt.Sprintf("%s/_index_template/falco", config.Elasticsearch.HostPort))
-				// err = elasticsearchClient.ElasticsearchCreateIndexTemplate(config.Elasticsearch)
-			}
-		}
-		if err != nil {
-			config.Elasticsearch.HostPort = ""
-		} else {
+	// if config.Elasticsearch.HostPort != "" {
+	// 	var err error
+	// 	endpointUrl := fmt.Sprintf("%s/%s/%s", config.Elasticsearch.HostPort, config.Elasticsearch.Index, config.Elasticsearch.Type)
+	// 	elasticsearchClient, err = outputs.NewClient("Elasticsearch", endpointUrl, config.Elasticsearch.MutualTLS, config.Elasticsearch.CheckCert, *initClientArgs)
+	// 	if err != nil {
+	// 		config.Elasticsearch.HostPort = ""
+	// 	} else {
+	// 		if config.Elasticsearch.CreateIndexTemplate {
+	// 			elasticsearchClient.EndpointURL, _ = url.Parse(fmt.Sprintf("%s/_index_template/falco", config.Elasticsearch.HostPort))
+	// 			// err = elasticsearchClient.ElasticsearchCreateIndexTemplate(config.Elasticsearch)
+	// 		}
+	// 	}
+	// 	if err != nil {
+	// 		config.Elasticsearch.HostPort = ""
+	// 	} else {
 
-			outputs.EnabledOutputs = append(outputs.EnabledOutputs, "Elasticsearch")
-		}
-	}
+	// 		outputs.EnabledOutputs = append(outputs.EnabledOutputs, "Elasticsearch")
+	// 	}
+	// }
 
 	if config.Quickwit.HostPort != "" {
 		var err error

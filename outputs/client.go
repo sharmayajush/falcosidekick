@@ -20,6 +20,7 @@ import (
 	"strings"
 	"sync"
 
+	"golang.org/x/sync/semaphore"
 	crdClient "sigs.k8s.io/wg-policy-prototypes/policy-report/pkg/generated/v1alpha2/clientset/versioned"
 
 	gcpfunctions "cloud.google.com/go/functions/apiv1"
@@ -38,6 +39,7 @@ import (
 	timescaledb "github.com/jackc/pgx/v5/pgxpool"
 	redis "github.com/redis/go-redis/v9"
 
+	"github.com/falcosecurity/falcosidekick/pkg/batcher"
 	"github.com/falcosecurity/falcosidekick/types"
 )
 
@@ -135,11 +137,33 @@ type Client struct {
 	GetLogs bool
 	//
 	Running bool
+	// batcher
+	batcher *batcher.Batcher
+	// Enable gzip compression
+	EnableCompression bool
+
+	// cached http.Client
+	httpcli *http.Client
+	// lock for http client creation
+	mx sync.Mutex
+
+	// common config
+	cfg types.CommonConfig
+
+	// init once on first request
+	initOnce sync.Once
+
+	// maxconcurrent requests limiter
+	sem *semaphore.Weighted
 }
 
 // InitClient returns a new output.Client for accessing the different API.
 func NewClient(outputType string, defaultEndpointURL string, mutualTLSEnabled bool, checkCert bool, params types.InitClientArgs) (*Client, error) {
 	reg := regexp.MustCompile(`(http|nats)(s?)://.*`)
+	if defaultEndpointURL == "" {
+		return &Client{OutputType: outputType, EndpointURL: nil, MutualTLSEnabled: mutualTLSEnabled, CheckCert: checkCert, HeaderList: []Header{}, ContentType: DefaultContentType, Config: params.Config, Stats: params.Stats, PromStats: params.PromStats, StatsdClient: params.StatsdClient, DogstatsdClient: params.DogstatsdClient}, nil
+
+	}
 	if !reg.MatchString(defaultEndpointURL) {
 		log.Printf("[ERROR] : %v - %v\n", outputType, "Bad Endpoint")
 		return nil, ErrClientCreation

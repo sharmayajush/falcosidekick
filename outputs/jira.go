@@ -2,13 +2,12 @@ package outputs
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"strings"
+	"log"
 
 	"github.com/andygrunwald/go-jira"
+	"github.com/falcosecurity/falcosidekick/types"
 )
 
 // PrettyString formats the string
@@ -21,46 +20,46 @@ func PrettyString(str string) (string, error) {
 }
 
 // SendMsgtoJira to send message to jira integration
-func SendMsgtoJira(ctx context.Context, value string, result []byte) error {
-	splitval := strings.Split(value, ",")
-
-	sendAlert := string(result)
+func (c *Client) SendMsgtoJira(payload types.Payload) error {
+	jsonPayload, err := json.Marshal(payload)
+	if err != nil {
+		log.Println("unable to marshal the payload")
+		return err
+	}
+	sendAlert := string(jsonPayload)
 
 	resJson, err := PrettyString(sendAlert)
 	if err != nil {
-		fmt.Println("Err in creating pretty res_json in Jira " + err.Error())
+		log.Println("Err in creating pretty res_json in Jira " + err.Error())
 		return errors.New("Err in creating pretty res_json in Jira")
 	}
-	if len(splitval) == 7 {
 
-		jiraClient, err := createClient(splitval[4], splitval[5], splitval[1])
-		if err != nil {
-			fmt.Println("Err in creating a new Jira Client " + err.Error())
-			return errors.New("Err in creating a new Jira Client ")
-		}
-
-		i := jira.Issue{
-			Fields: &jira.IssueFields{
-				Description: resJson,
-				Type: jira.IssueType{
-					Name: splitval[3],
-				},
-				Project: jira.Project{
-					Key: splitval[2],
-				},
-				Summary: splitval[0],
-			},
-		}
-		issue, _, err := jiraClient.Issue.Create(&i)
-		if err != nil {
-			fmt.Println("Failed to create Jira Ticket " + err.Error())
-			return errors.New("Failed to create Jira Ticket ")
-		}
-		fmt.Println("Jira Ticket Created Successfully :> %v", issue)
-		return nil
+	jiraClient, err := createClient(c.Config.Jira.UserEmail, c.Config.Jira.Token, c.Config.Jira.Site)
+	if err != nil {
+		log.Println("Err in creating a new Jira Client " + err.Error())
+		return errors.New("Err in creating a new Jira Client ")
 	}
-	fmt.Println("unable to get the required value in send msg to jira ")
-	return errors.New("unable to get the required value for sending message to jira ")
+
+	i := jira.Issue{
+		Fields: &jira.IssueFields{
+			Description: resJson,
+			Type: jira.IssueType{
+				Name: c.Config.Jira.IssueType,
+			},
+			Project: jira.Project{
+				Key: c.Config.Jira.Project,
+			},
+			Summary: c.Config.Jira.IssueSummary,
+		},
+	}
+	issue, _, err := jiraClient.Issue.Create(&i)
+	if err != nil {
+		log.Println("Failed to create Jira Ticket " + err.Error())
+		return errors.New("Failed to create Jira Ticket ")
+	}
+	log.Printf("Jira Ticket Created Successfully :> %v", issue)
+	return nil
+
 }
 
 func createClient(userEmail, token, siteUrl string) (*jira.Client, error) {
@@ -71,7 +70,7 @@ func createClient(userEmail, token, siteUrl string) (*jira.Client, error) {
 
 	jiraClient, err := jira.NewClient(tp.Client(), siteUrl)
 	if err != nil {
-		fmt.Println("Err in creating a new Jira Client " + err.Error())
+		log.Println("Err in creating a new Jira Client " + err.Error())
 		return nil, errors.New("Err in creating a new Jira Client ")
 	}
 	return jiraClient, nil

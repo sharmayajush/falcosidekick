@@ -217,7 +217,7 @@ func (c *Client) SendAlerts() error {
 	// case AlertBufferChannel <- jsonData:
 	// default:
 	// }
-	c.TeamsPost(alert)
+	c.SendToElastic(alert)
 	time.Sleep(10 * time.Second)
 	// }
 	return nil

@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/DataDog/datadog-go/statsd"
+	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/falcosecurity/falcosidekick/outputs"
 	"github.com/falcosecurity/falcosidekick/types"
 )
@@ -24,6 +25,28 @@ func main() {
 	// e1.TLS = true
 	// e1.User = ""
 	// e1.AuthMechanism = ""
+	cfg := elasticsearch.Config{
+		Username: "elastic",
+		Password: "eMb7PI19M8H0amDxW2AMyWU3",
+		CloudID:  "0898587d6c374850aa8bbb350d0f8b4a:dXMtY2VudHJhbDEuZ2NwLmNsb3VkLmVzLmlvJDhiNWEwN2MwZmQ3MzQwYjM4NTJiYTg2YmEzMjkzNmQ5JGQ0ZmU4ZDg5Zjk3MzRmY2NhMzZlY2Q2MjQ0ODU0YTg3",
+		APIKey:   "c29KTUE1VUJoUHA4MzgxXzI0QVU6Rm5lN1QxTXZRZmVnV0NxMUVfVHdodw==",
+	}
+	cf1 := types.Configuration{
+		Elasticsearch: cfg,
+	}
+	stats := &types.Statistics{}
+	promStats := &types.PromStatistics{}
+	initClientArgs := &types.InitClientArgs{
+		Config:          &cf1,
+		Stats:           stats,
+		DogstatsdClient: dogstatsdClient,
+		PromStats:       promStats,
+	}
+	c1, err := outputs.NewClient("Elasticsearch", "", false, false, *initClientArgs)
+	if err != nil {
+		fmt.Println("unable to create client")
+	}
+	c1.SendAlerts()
 
 	// var t1 types.SlackOutputConfig
 
@@ -38,39 +61,45 @@ func main() {
 	// stats := &types.Statistics{}
 	// promStats := &types.PromStatistics{}
 	// initClientArgs := &types.InitClientArgs{
+	// 	Config:          &cf2,
+	// 	Stats:           stats,
+	// 	DogstatsdClient: dogstatsdClient,
+	// 	PromStats:       promStats,
+	// }
+	// c1, err := outputs.NewClient("Slack", cf2.Slack.WebhookURL, cf1.Slack.MutualTLS, cf1.Slack.CheckCert, *initClientArgs)
+	// if err != nil {
+	// 	fmt.Println("error---")
+	// }
+	// endpointUrl := fmt.Sprintf("%s/%s/%s", cf2.Elasticsearch.HostPort, cf2.Elasticsearch.Index, cf2.Elasticsearch.Type)
+	// elasticsearchClient, err := outputs.NewClient("Elasticsearch", endpointUrl, cf2.Elasticsearch.MutualTLS, cf2.Elasticsearch.CheckCert, *initClientArgs)
+	// if err != nil {
+	// 	fmt.Println("error---")
+	// }
+	// elasticsearchClient.SendAlerts()
+
+	// var t2 types.DiscordOutputConfig
+	// t2.WebhookURL = "https://discord.com/api/webhooks/1319533054661885952/uvfjilJLeHTVfmdIkxKaF5SIGNJ3jhUUEHrDFwARtFNBhRHq8vtnZsA5hpcvoGjzdGtV"
+	// t2.Icon = "https://help.accuknox.com/assets/images/logo.png"
+	// var t3 types.TeamsOutputConfig
+	// t3.WebhookURL = "https://accuknox981.webhook.office.com/webhookb2/94632bbb-7f4c-4e9b-8cde-1c2ee21e0219@36ddf603-4580-43e4-a49d-353a5de81b7a/IncomingWebhook/708b08a951554c37adf52381c6a0a637/9933e893-62ca-4808-a76e-f9b0780b0379/V2s-BDn6vppgH6DtiI528jZ9J09Q48KMgMS4A4oP103nc1"
+	// t3.ActivityImage = "https://help.accuknox.com/assets/images/logo.png"
+	// cf1 := types.Configuration{
+	// 	Teams: t3,
+	// }
+	// stats := &types.Statistics{}
+	// promStats := &types.PromStatistics{}
+	// initClientArgs := &types.InitClientArgs{
 	// 	Config:          &cf1,
 	// 	Stats:           stats,
 	// 	DogstatsdClient: dogstatsdClient,
 	// 	PromStats:       promStats,
 	// }
-	// c1, err := outputs.NewClient("Slack", cf1.Slack.WebhookURL, cf1.Slack.MutualTLS, cf1.Slack.CheckCert, *initClientArgs)
+	// // c1, err := outputs.NewClient("Discord", cf1.Discord.WebhookURL, cf1.Discord.MutualTLS, cf1.Discord.CheckCert, *initClientArgs)
+	// c1, err := outputs.NewClient("Teams", cf1.Teams.WebhookURL, cf1.Teams.MutualTLS, cf1.Teams.CheckCert, *initClientArgs)
 	// if err != nil {
 	// 	fmt.Println("error---")
+	// 	return
 	// }
-
-	// var t2 types.DiscordOutputConfig
-	// t2.WebhookURL = "https://discord.com/api/webhooks/1319533054661885952/uvfjilJLeHTVfmdIkxKaF5SIGNJ3jhUUEHrDFwARtFNBhRHq8vtnZsA5hpcvoGjzdGtV"
-	// t2.Icon = "https://help.accuknox.com/assets/images/logo.png"
-	var t3 types.TeamsOutputConfig
-	t3.WebhookURL = "https://accuknox981.webhook.office.com/webhookb2/94632bbb-7f4c-4e9b-8cde-1c2ee21e0219@36ddf603-4580-43e4-a49d-353a5de81b7a/IncomingWebhook/708b08a951554c37adf52381c6a0a637/9933e893-62ca-4808-a76e-f9b0780b0379/V2s-BDn6vppgH6DtiI528jZ9J09Q48KMgMS4A4oP103nc1"
-	t3.ActivityImage = "https://help.accuknox.com/assets/images/logo.png"
-	cf1 := types.Configuration{
-		Teams: t3,
-	}
-	stats := &types.Statistics{}
-	promStats := &types.PromStatistics{}
-	initClientArgs := &types.InitClientArgs{
-		Config:          &cf1,
-		Stats:           stats,
-		DogstatsdClient: dogstatsdClient,
-		PromStats:       promStats,
-	}
-	// c1, err := outputs.NewClient("Discord", cf1.Discord.WebhookURL, cf1.Discord.MutualTLS, cf1.Discord.CheckCert, *initClientArgs)
-	c1, err := outputs.NewClient("Teams", cf1.Teams.WebhookURL, cf1.Teams.MutualTLS, cf1.Teams.CheckCert, *initClientArgs)
-	if err != nil {
-		fmt.Println("error---")
-		return
-	}
 	// var t3 types.TelegramConfig
 	// t3.ChatID = "-4662869329"
 	// t3.Token = "8018066119:AAG_S9b2atIZHX6BCy2gocuC-5EucSxbopI"
@@ -101,13 +130,13 @@ func main() {
 	// }
 	// outputs.AlertLock = &sync.RWMutex{}
 	// outputs.AlertRunning = true
-	fmt.Println(c1)
+	// fmt.Println(c1)
 	// outputs.InitSidekick()
 
 	// go c1.SendAlerts()
 	// go c1.AddAlertFromBuffChan()
 	// go c1.WatchSlackAlerts()
-	c1.SendAlerts()
+	// c1.SendAlerts()
 
 	select {}
 }

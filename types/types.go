@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/DataDog/datadog-go/statsd"
+	elasticsearch "github.com/elastic/go-elasticsearch/v8"
 	"github.com/embano1/memlog"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -63,13 +64,15 @@ type Configuration struct {
 	Slack              SlackOutputConfig
 	Email              EmailOutputConfig
 	Cliq               CliqOutputConfig
+	Elasticsearch      elasticsearch.Config
+	Jira               JiraOutputConfig
+	Splunk             SplunkOutputConfig
 	Mattermost         MattermostOutputConfig
 	Rocketchat         RocketchatOutputConfig
 	Teams              TeamsOutputConfig
 	Datadog            DatadogOutputConfig
 	Discord            DiscordOutputConfig
 	Alertmanager       AlertmanagerOutputConfig
-	Elasticsearch      ElasticsearchOutputConfig
 	Quickwit           QuickwitOutputConfig
 	Influxdb           InfluxdbOutputConfig
 	Loki               LokiOutputConfig
@@ -146,6 +149,27 @@ type TLSServer struct {
 	CaCertFile string
 	NoTLSPort  int
 	NoTLSPaths []string
+}
+
+type JiraOutputConfig struct {
+	IssueSummary string
+	Site         string
+	Project      string
+	IssueType    string
+	UserEmail    string
+	Token        string
+	UserID       string
+}
+
+type SplunkOutputConfig struct {
+	ChannelsID  int
+	Url         string
+	Token       string
+	Source      string
+	SourceType  string
+	SplunkIndex string
+	SkipTls     bool
+	Certificate string
 }
 
 // SlackOutputConfig represents parameters for Slack
@@ -274,23 +298,36 @@ type AlertmanagerOutputConfig struct {
 	CustomHeaders            map[string]string
 }
 
+type CommonConfig struct {
+	CheckCert             bool
+	MutualTLS             bool
+	MaxConcurrentRequests uint16 // Max concurrent requests at a time, unlimited if 0
+}
 type ElasticsearchOutputConfig struct {
+	CommonConfig        `mapstructure:",squash"`
 	HostPort            string
 	Index               string
 	Type                string
+	Pipeline            string
 	MinimumPriority     string
 	Suffix              string
 	Username            string
 	Password            string
+	ApiKey              string
 	FlattenFields       bool
 	CreateIndexTemplate bool
 	NumberOfShards      int
 	NumberOfReplicas    int
-	CheckCert           bool
-	MutualTLS           bool
 	CustomHeaders       map[string]string
+	Batching            BatchingConfig
+	EnableCompression   bool
 }
 
+type BatchingConfig struct {
+	Enabled       bool          `json:"enabled" yaml:"enabled"`
+	BatchSize     int           `json:"batchsize" yaml:"batchsize"`
+	FlushInterval time.Duration `json:"flushinterval" yaml:"flushinterval"`
+}
 type QuickwitOutputConfig struct {
 	HostPort        string
 	ApiEndpoint     string

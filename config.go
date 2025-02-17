@@ -28,14 +28,14 @@ func getConfig() *types.Configuration {
 		TLSServer:       types.TLSServer{NoTLSPaths: make([]string, 0)},
 		Grafana:         types.GrafanaOutputConfig{CustomHeaders: make(map[string]string)},
 		Loki:            types.LokiOutputConfig{CustomHeaders: make(map[string]string)},
-		Elasticsearch:   types.ElasticsearchOutputConfig{CustomHeaders: make(map[string]string)},
-		Quickwit:        types.QuickwitOutputConfig{CustomHeaders: make(map[string]string)},
-		OpenObserve:     types.OpenObserveConfig{CustomHeaders: make(map[string]string)},
-		Webhook:         types.WebhookOutputConfig{CustomHeaders: make(map[string]string)},
-		Alertmanager:    types.AlertmanagerOutputConfig{ExtraLabels: make(map[string]string), ExtraAnnotations: make(map[string]string), CustomSeverityMap: make(map[types.PriorityType]string), CustomHeaders: make(map[string]string)},
-		CloudEvents:     types.CloudEventsOutputConfig{Extensions: make(map[string]string)},
-		GCP:             types.GcpOutputConfig{PubSub: types.GcpPubSub{CustomAttributes: make(map[string]string)}},
-		OTLP:            types.OTLPOutputConfig{Traces: types.OTLPTraces{ExtraEnvVars: make(map[string]string)}},
+		// Elasticsearch:   types.ElasticsearchOutputConfig{CustomHeaders: make(map[string]string)},
+		Quickwit:     types.QuickwitOutputConfig{CustomHeaders: make(map[string]string)},
+		OpenObserve:  types.OpenObserveConfig{CustomHeaders: make(map[string]string)},
+		Webhook:      types.WebhookOutputConfig{CustomHeaders: make(map[string]string)},
+		Alertmanager: types.AlertmanagerOutputConfig{ExtraLabels: make(map[string]string), ExtraAnnotations: make(map[string]string), CustomSeverityMap: make(map[types.PriorityType]string), CustomHeaders: make(map[string]string)},
+		CloudEvents:  types.CloudEventsOutputConfig{Extensions: make(map[string]string)},
+		GCP:          types.GcpOutputConfig{PubSub: types.GcpPubSub{CustomAttributes: make(map[string]string)}},
+		OTLP:         types.OTLPOutputConfig{Traces: types.OTLPTraces{ExtraEnvVars: make(map[string]string)}},
 	}
 
 	configFile := kingpin.Flag("config-file", "config file").Short('c').ExistingFile()
@@ -720,12 +720,12 @@ func getConfig() *types.Configuration {
 		c.Loki.ExtraLabelsList = strings.Split(strings.ReplaceAll(c.Loki.ExtraLabels, " ", ""), ",")
 	}
 
-	if c.Elasticsearch.NumberOfReplicas <= 0 {
-		c.Elasticsearch.NumberOfReplicas = 3
-	}
-	if c.Elasticsearch.NumberOfShards <= 0 {
-		c.Elasticsearch.NumberOfShards = 3
-	}
+	// if c.Elasticsearch. <= 0 {
+	// 	c.Elasticsearch.NumberOfReplicas = 3
+	// }
+	// if c.Elasticsearch.NumberOfShards <= 0 {
+	// 	c.Elasticsearch.NumberOfShards = 3
+	// }
 
 	if c.Prometheus.ExtraLabels != "" {
 		c.Prometheus.ExtraLabelsList = strings.Split(strings.ReplaceAll(c.Prometheus.ExtraLabels, " ", ""), ",")
@@ -769,7 +769,7 @@ func getConfig() *types.Configuration {
 	c.Datadog.MinimumPriority = checkPriority(c.Datadog.MinimumPriority)
 	c.Alertmanager.MinimumPriority = checkPriority(c.Alertmanager.MinimumPriority)
 	c.Alertmanager.DropEventDefaultPriority = checkPriority(c.Alertmanager.DropEventDefaultPriority)
-	c.Elasticsearch.MinimumPriority = checkPriority(c.Elasticsearch.MinimumPriority)
+	// c.Elasticsearch.MinimumPriority = checkPriority(c.Elasticsearch.pri)
 	c.Quickwit.MinimumPriority = checkPriority(c.Quickwit.MinimumPriority)
 	c.Influxdb.MinimumPriority = checkPriority(c.Influxdb.MinimumPriority)
 	c.Loki.MinimumPriority = checkPriority(c.Loki.MinimumPriority)
